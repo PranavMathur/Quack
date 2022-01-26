@@ -8,44 +8,50 @@ import sys
 quack_grammar = """
     ?start: program
 
-    ?program: statement
-            | program statement
+    program: statement
+           | program statement
 
-    ?statement: r_exp ";"
-              | assignment ";"
+    statement: r_exp ";"
+             | assignment ";"
 
-    ?assignment: l_exp ":" type "=" r_exp -> assign
+    assignment: l_exp ":" type "=" r_exp -> assign
 
-    ?type: NAME
+    type: NAME
 
-    ?l_exp: NAME
-          | l_exp "." NAME                -> field
+    l_exp: NAME
 
-    ?r_exp: sum
-          | l_exp "." NAME "()"           -> call
+    r_exp: sum
+         | m_call
 
-    ?sum: product
-        | sum "+" product   -> add
-        | sum "-" product   -> sub
+    m_call: r_exp "." m_name "(" m_args ")"
 
-    ?product: atom
-            | product "*" atom  -> mul
-            | product "/" atom  -> div
+    m_name: NAME
 
-    ?atom: NUMBER           -> number
-         | "-" atom         -> neg
-         | l_exp            -> var
-         | "(" sum ")"
-         | boolean
-         | nothing
-         | string
+    m_args: r_exp ("," r_exp)* (",")?
+          |
 
-    ?boolean: "true"        -> lit_true
-            | "false"       -> lit_false
+    sum: product
+       | sum "+" product   -> add
+       | sum "-" product   -> sub
+
+    product: atom
+           | product "*" atom  -> mul
+           | product "/" atom  -> div
+
+    atom: NUMBER           -> number
+        | "-" atom         -> neg
+        | l_exp            -> var
+        | "(" sum ")"
+        | boolean
+        | nothing
+        | string
+
+    boolean: "true"        -> lit_true
+           | "false"       -> lit_false
     
-    ?nothing: "none"        -> lit_nothing
+    nothing: "none"        -> lit_nothing
     
-    ?string: ESCAPED_STRING -> string
+    string: ESCAPED_STRING -> string
 
     %import common.NUMBER
     %import common.ESCAPED_STRING
@@ -94,8 +100,6 @@ class Transformer(lark.Transformer):
         self.output.append('\tstore %s' % name)
     def var(self, name):
         self.output.append('\tload %s' % name)
-    def field(*args):
-        print(args)
     def call(*args):
         print(args)
 
@@ -145,7 +149,8 @@ def main():
             tree = parser.parse(line)
             if args.tree:
                 print(tree.pretty())
-        except lark.exceptions.LarkError:
+        except lark.exceptions.LarkError as e:
+            raise e from None
             #output to stderr on failed parse
             print('Invalid line: "%s"' % line, file=sys.stderr)
     
