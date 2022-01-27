@@ -49,7 +49,7 @@ quack_grammar = """
     ?boolean: "true"  -> lit_true
             | "false" -> lit_false
     
-    ?nothing: "none"
+    ?nothing: "none"  -> lit_nothing
     
     ?string: ESCAPED_STRING
 
@@ -102,6 +102,43 @@ class Transformer(lark.Transformer):
         ]
         return lark.Tree('m_call', children)
 
+class Initializer(lark.visitors.Visitor_Recursive):
+    def __default__(self, tree):
+        tree.parent = None
+        tree.type = ''
+        for subtree in tree.children:
+            if isinstance(subtree, lark.Tree):
+                subtree.parent = tree
+
+class TypeInferrer(lark.visitors.Visitor_Recursive):
+    def __init__(self, types):
+        self.variables = {}
+        self.types = types
+    def __default__(self, tree):
+        literals = {
+            'lit_number': 'Int',
+            'lit_string': 'String',
+            'lit_true': 'Boolean',
+            'lit_false': 'Boolean',
+            'lit_nothing': 'Nothing'
+        }
+        if tree.data in literals:
+            tree.type = literals[tree.data]
+        elif tree.data == 'var':
+            name = str(tree.children[0])
+            tree.type = self.variables.get(name, '')
+        elif tree.data == 'assign':
+            #tree.type = tree.children[2].type
+            left = tree.children[0]
+            tree.type = tree.children[1]
+            if isinstance(left, lark.Token):
+                self.variables[str(left)] = tree.type
+        elif tree.data == 'm_call':
+            left_type = tree.children[0].type
+            m_name = tree.children[1]
+            ret = self.types[left_type]['methods'][m_name]['ret']
+            tree.type = ret
+
 class Generator(lark.visitors.Visitor_Recursive):
     def __init__(self, code, types):
         super().__init__()
@@ -126,16 +163,18 @@ class Generator(lark.visitors.Visitor_Recursive):
         self.variables[name] = type
         self.code.append('store %s' % name)
     def m_call(self, tree):
-        self.code.append('call Obj:%s' % tree.children[1])
+        left_type = tree.children[0].type
+        self.code.append('call %s:%s' % (left_type, tree.children[1]))
 
 def generate_code(name, variables, code, out):
-    print('.class %s:Obj\n\n.method $constructor' % name, file=out)
+    emit = lambda s: print(s, file=out)
+    emit('.class %s:Obj\n\n.method $constructor' % name)
     if variables:
-        print('.local %s' % ','.join(i for i in variables), file=out)
-    print('\tenter', file=out)
+        emit('.local %s' % ','.join(i for i in variables))
+    #emit('\tenter')
     for line in code:
-        print('\t' + line, file=out)
-    print('\treturn 0', file=out)
+        emit('\t' + line)
+    emit('\treturn 0')
 
 #read an input and output file from the command line arguments
 def cli_parser():
@@ -160,6 +199,11 @@ def main():
 
     transformer = Transformer()
     tree = transformer.transform(tree)
+
+    initializer = Initializer()
+    initializer.visit(tree)
+    inferrer = TypeInferrer(types);
+    inferrer.visit(tree)
 
     code = []
     generator = Generator(code, types)
