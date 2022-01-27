@@ -112,7 +112,7 @@
                 "params": [
                     "String"
                 ],
-                "ret": "Int"
+                "ret": "String"
             }
         },
         "fields": {}
