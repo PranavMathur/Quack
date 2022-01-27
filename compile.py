@@ -37,20 +37,20 @@ quack_grammar = """
             | product "*" atom -> mul
             | product "/" atom -> div
 
-    ?atom: NUMBER -> number
-         | "-" atom
+    ?atom: NUMBER      -> lit_number
+         | "-" atom    -> neg
          | l_exp
          | "(" sum ")"
          | boolean
          | nothing
-         | string
+         | string      -> lit_string
 
-    boolean: "true"
-           | "false"
+    ?boolean: "true"  -> lit_true
+            | "false" -> lit_false
     
-    nothing: "none"
+    ?nothing: "none"
     
-    string: ESCAPED_STRING
+    ?string: ESCAPED_STRING
 
     %import common.NUMBER
     %import common.ESCAPED_STRING
@@ -93,10 +93,28 @@ class Transformer(lark.Transformer):
             lark.Tree('m_args', tree.children[1:])
         ]
         return lark.Tree('m_call', children)
+    def neg(self, tree):
+        children = [
+            tree.children[0],
+            'NEG',
+            lark.Tree('m_args', [])
+        ]
+        return lark.Tree('m_call', children)
 
 class Generator(lark.visitors.Visitor_Recursive):
-    def number(*args):
-        print(args)
+    def __init__(self, code):
+        super().__init__()
+        self.code = code
+    def lit_number(self, tree):
+        self.code.append('const %s' % tree.children[0])
+    def lit_true(self, tree):
+        self.code.append('const true')
+    def lit_false(self, tree):
+        self.code.append('const false')
+    def lit_nothing(self, tree):
+        self.code.append('const nothing')
+    def lit_string(self, tree):
+        self.code.append('const %s' % tree.children[0])
 
 #read an input and output file from the command line arguments
 def cli_parser():
@@ -116,12 +134,16 @@ def main():
     )
     
     tree = parser.parse(args.source.read())
-    #print(tree)
+
     transformer = Transformer()
     tree = transformer.transform(tree)
-    #print(tree.pretty())
-    generator = Generator()
+
+    code = []
+    generator = Generator(code)
     generator.visit(tree)
+
+    for line in code:
+        print('\t' + line)
 
 if __name__ == '__main__' and not sys.flags.interactive:
     main()
