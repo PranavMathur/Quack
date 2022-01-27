@@ -8,50 +8,42 @@ import sys
 quack_grammar = """
     ?start: program
 
-    program: statement
-           | program statement
+    ?program: statement
+            | program statement
 
-    statement: r_exp ";"
-             | assignment ";"
+    ?statement: r_exp ";"
+              | assignment ";"
 
-    assignment: l_exp ":" type "=" r_exp -> assign
+    ?assignment: l_exp ":" type "=" r_exp -> assign
 
-    type: NAME
+    ?type: NAME
 
-    l_exp: NAME
+    ?l_exp: NAME
 
-    r_exp: sum
-         | m_call
+    ?r_exp: sum
 
-    m_call: r_exp "." m_name "(" m_args ")"
+    ?sum: product
+        | sum "+" product   -> add
+        | sum "-" product   -> sub
 
-    m_name: NAME
+    ?product: atom
+            | product "*" atom  -> mul
+            | product "/" atom  -> div
 
-    m_args: r_exp ("," r_exp)* (",")?
-          |
+    ?atom: NUMBER           -> number
+         | "-" atom         -> neg
+         | l_exp            -> var
+         | "(" sum ")"
+         | boolean
+         | nothing
+         | string
 
-    sum: product
-       | sum "+" product   -> add
-       | sum "-" product   -> sub
-
-    product: atom
-           | product "*" atom  -> mul
-           | product "/" atom  -> div
-
-    atom: NUMBER           -> number
-        | "-" atom         -> neg
-        | l_exp            -> var
-        | "(" sum ")"
-        | boolean
-        | nothing
-        | string
-
-    boolean: "true"        -> lit_true
-           | "false"       -> lit_false
+    ?boolean: "true"        -> lit_true
+            | "false"       -> lit_false
     
-    nothing: "none"        -> lit_nothing
+    ?nothing: "none"        -> lit_nothing
     
-    string: ESCAPED_STRING -> string
+    ?string: ESCAPED_STRING -> string
 
     %import common.NUMBER
     %import common.ESCAPED_STRING
@@ -82,16 +74,16 @@ class Transformer(lark.Transformer):
         self.output.append('\tconst %s' % token)
     def add(self, a, b):
         #output a call to the builtin addition function
-        self.output.append('\tcall Int:plus')
+        self.output.append('\tcall Int:PLUS')
     def sub(self, a, b):
         #output a call to the builtin subtraction function
-        self.output.append('\tcall Int:sub')
+        self.output.append('\tcall Int:MINUS')
     def mul(self, a, b):
         #output a call to the builtin multiplication function
-        self.output.append('\tcall Int:mult')
+        self.output.append('\tcall Int:TIMES')
     def div(self, a, b):
         #output a call to the builtin division function
-        self.output.append('\tcall Int:div')
+        self.output.append('\tcall Int:DIVIDE')
     def neg(self, a): #
         #output a call to the builtin negation function
         self.output.append('\tcall Int:neg')
@@ -100,8 +92,6 @@ class Transformer(lark.Transformer):
         self.output.append('\tstore %s' % name)
     def var(self, name):
         self.output.append('\tload %s' % name)
-    def call(*args):
-        print(args)
 
 #read an input and output file from the command line arguments
 def cli_parser():
@@ -110,7 +100,6 @@ def cli_parser():
     parser.add_argument('target', nargs='?',
                         type=argparse.FileType('w'), default=sys.stdout)
     parser.add_argument('--name', nargs='?', default='Main')
-    parser.add_argument('--tree', '-t', action='store_true')
     return parser.parse_args()
 
 assembly_header = """\
@@ -123,8 +112,6 @@ def main():
     args = cli_parser()
     output = []
     transformer = Transformer(output)
-    if args.tree:
-        transformer = None
     parser = lark.Lark(
         quack_grammar,
         parser='lalr',
@@ -140,22 +127,25 @@ def main():
         if not line: #ignore blank lines
             continue
         #output command to print raw expression
-        gen('\tconst "%s\\n"' % line.replace('"', "'"))
+        gen('\tconst "%s\\n"' % line)
         gen('\tcall String:print')
         gen('\tpop')
 
         try:
             #attempt to parse expression
             tree = parser.parse(line)
-            if args.tree:
-                print(tree.pretty())
-        except lark.exceptions.LarkError as e:
-            raise e from None
+        except lark.exceptions.LarkError:
             #output to stderr on failed parse
             print('Invalid line: "%s"' % line, file=sys.stderr)
-    
-    if args.tree:
-        return
+        else:
+            #if no exception was found, output command to print result
+            #gen('\tcall Obj:print')
+            #gen('\tpop')
+            #print newline after each expression
+            #gen('\tconst "\\n"')
+            #gen('\tcall String:print')
+            #gen('\tpop')
+            pass
 
     gen('\tconst "---------------\\n"')
     gen('\tcall String:print')
