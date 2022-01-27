@@ -23,7 +23,7 @@ quack_grammar = """
     ?r_exp: sum
           | m_call
 
-    m_call: r_exp "." m_name "(" m_args ")"
+    m_call: r_exp "." m_name "(" m_args ")" -> m_call
 
     ?m_name: NAME
 
@@ -125,12 +125,14 @@ class Generator(lark.visitors.Visitor_Recursive):
         type = tree.children[1]
         self.variables[name] = type
         self.code.append('store %s' % name)
+    def m_call(self, tree):
+        self.code.append('call Obj:%s' % tree.children[1])
 
 def generate_code(name, variables, code, out):
     print('.class %s:Obj\n\n.method $constructor' % name, file=out)
     if variables:
         print('.local %s' % ','.join(i for i in variables), file=out)
-    print('\tenter')
+    print('\tenter', file=out)
     for line in code:
         print('\t' + line, file=out)
     print('\treturn 0', file=out)
