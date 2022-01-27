@@ -2,6 +2,7 @@
 
 import lark
 import argparse
+import json
 import sys
 
 #this grammar was created during office hours on 1/19/22
@@ -13,7 +14,7 @@ quack_grammar = """
     ?statement: r_exp ";"
               | assignment ";"
 
-    assignment: l_exp ":" type "=" r_exp
+    assignment: l_exp ":" type "=" r_exp -> assign
 
     ?type: NAME
 
@@ -39,7 +40,7 @@ quack_grammar = """
 
     ?atom: NUMBER      -> lit_number
          | "-" atom    -> neg
-         | l_exp
+         | l_exp       -> var
          | "(" sum ")"
          | boolean
          | nothing
@@ -102,9 +103,11 @@ class Transformer(lark.Transformer):
         return lark.Tree('m_call', children)
 
 class Generator(lark.visitors.Visitor_Recursive):
-    def __init__(self, code):
+    def __init__(self, code, types):
         super().__init__()
         self.code = code
+        self.types = types
+        self.variables = {}
     def lit_number(self, tree):
         self.code.append('const %s' % tree.children[0])
     def lit_true(self, tree):
@@ -115,6 +118,22 @@ class Generator(lark.visitors.Visitor_Recursive):
         self.code.append('const nothing')
     def lit_string(self, tree):
         self.code.append('const %s' % tree.children[0])
+    def var(self, tree):
+        self.code.append('load %s' % tree.children[0])
+    def assign(self, tree):
+        name = tree.children[0]
+        type = tree.children[1]
+        self.variables[name] = type
+        self.code.append('store %s' % name)
+
+def generate_code(name, variables, code, out):
+    print('.class %s:Obj\n\n.method $constructor' % name, file=out)
+    if variables:
+        print('.local %s' % ','.join(i for i in variables), file=out)
+    print('\tenter')
+    for line in code:
+        print('\t' + line, file=out)
+    print('\treturn 0', file=out)
 
 #read an input and output file from the command line arguments
 def cli_parser():
@@ -128,6 +147,8 @@ def cli_parser():
 
 def main():
     args = cli_parser()
+    with open('builtin_methods.json', 'r') as f:
+        types = json.load(f)
     parser = lark.Lark(
         quack_grammar,
         parser='lalr'
@@ -139,11 +160,10 @@ def main():
     tree = transformer.transform(tree)
 
     code = []
-    generator = Generator(code)
+    generator = Generator(code, types)
     generator.visit(tree)
 
-    for line in code:
-        print('\t' + line)
+    generate_code(args.name, generator.variables, code, args.target)
 
 if __name__ == '__main__' and not sys.flags.interactive:
     main()
