@@ -102,14 +102,6 @@ class Transformer(lark.Transformer):
         ]
         return lark.Tree('m_call', children)
 
-class Initializer(lark.visitors.Visitor_Recursive):
-    def __default__(self, tree):
-        tree.parent = None
-        tree.type = ''
-        for subtree in tree.children:
-            if isinstance(subtree, lark.Tree):
-                subtree.parent = tree
-
 class TypeInferrer(lark.visitors.Visitor_Recursive):
     def __init__(self, types):
         self.variables = {}
@@ -200,8 +192,6 @@ def main():
     transformer = Transformer()
     tree = transformer.transform(tree)
 
-    initializer = Initializer()
-    initializer.visit(tree)
     inferrer = TypeInferrer(types);
     inferrer.visit(tree)
 
