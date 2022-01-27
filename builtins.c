@@ -325,7 +325,9 @@ struct  class_struct  the_class_String_struct = {
         method_String_constructor,     /* Constructor */
         method_String_string,
         method_String_print,
-        method_String_equals
+        method_String_equals,
+        method_tbd_1, //method_String_less,
+        method_tbd_1 //method_String_plus
 };
 
 class_ref the_class_String = &the_class_String_struct;
