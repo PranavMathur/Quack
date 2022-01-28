@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
@@ -10,6 +11,11 @@
 int main(int argc, char *argv[]) {
     set_log_level(INFO);
     log_info("This is the tiny VM\n");
+    if (argc < 2) {
+        fprintf(stderr, "No main class given. Aborting.\n");
+        exit(1);
+        return 1;
+    }
     int opt;
     char *main_class = "";
     char load_path[PATHBUFSIZE];
