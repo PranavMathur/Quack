@@ -5,10 +5,11 @@ A tiny virtual machine interpreter for Quack programs
 
 To compile and run a Quack program, run the following sequence of commands:
 ```
-python translator.py <source_file> out.asm
-python assemble.py out.asm sample.json
-./tiny_vm
+qcc <source_file> [name=Main]
+./tiny_vm <name>
 ```
+
+`qcc` defaults to creating a class named `Main`. This can be customized by providing a command-line argument to `qcc`. The class name is then passed to `tiny_vm`.
 
 ## Work in progress
 
