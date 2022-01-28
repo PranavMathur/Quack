@@ -67,38 +67,20 @@ quack_grammar = """
 @lark.v_args(tree=True)
 class Transformer(lark.Transformer):
     def plus(self, tree):
-        children = [
-            tree.children[0],
-            'PLUS',
-            lark.Tree('m_args', tree.children[1:])
-        ]
-        return lark.Tree('m_call', children)
+        return self.op(tree, 'PLUS')
     def minus(self, tree):
-        children = [
-            tree.children[0],
-            'MINUS',
-            lark.Tree('m_args', tree.children[1:])
-        ]
-        return lark.Tree('m_call', children)
+        return self.op(tree, 'MINUS')
     def mul(self, tree):
-        children = [
-            tree.children[0],
-            'TIMES',
-            lark.Tree('m_args', tree.children[1:])
-        ]
-        return lark.Tree('m_call', children)
+        return self.op(tree, 'TIMES')
     def div(self, tree):
-        children = [
-            tree.children[0],
-            'DIVIDE',
-            lark.Tree('m_args', tree.children[1:])
-        ]
-        return lark.Tree('m_call', children)
+        return self.op(tree, 'DIVIDE')
     def neg(self, tree):
+        return self.op(tree, 'NEG')
+    def op(self, tree, op):
         children = [
             tree.children[0],
-            'NEG',
-            lark.Tree('m_args', [])
+            op,
+            lark.Tree('m_args', tree.children[1:])
         ]
         return lark.Tree('m_call', children)
 

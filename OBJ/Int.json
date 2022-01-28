@@ -10,7 +10,7 @@
                 "TIMES",
                 "MINUS",
                 "DIVIDE",
-                "neg"
+                "NEG"
   ],
   "fields": []
 }
