@@ -160,15 +160,21 @@ class Generator(lark.visitors.Visitor_Recursive):
         #emit a method call of the correct type
         self.code.append('call %s:%s' % (left_type, tree.children[1]))
 
+#outputs assembly code to given stream
 def generate_code(name, variables, code, out):
-    emit = lambda s: print(s, file=out)
+    emit = lambda s: print(s, file=out) #convenience method
+    #emit header common to all files
     emit('.class %s:Obj\n\n.method $constructor' % name)
     if variables:
+        #emit list of local variables separated by commas
         emit('.local %s' % ','.join(i for i in variables))
     emit('\tenter')
+    #emit each line, indented by one tab
     for line in code:
         emit('\t' + line)
+    #push return value of constructor
     emit('\tconst nothing')
+    #return, popping zero arguments
     emit('\treturn 0')
 
 #read an input and output file from the command line arguments
@@ -183,6 +189,7 @@ def cli_parser():
 
 def main():
     args = cli_parser()
+    #read type table from file
     with open('builtin_methods.json', 'r') as f:
         types = json.load(f)
     parser = lark.Lark(
@@ -190,18 +197,23 @@ def main():
         parser='lalr'
     )
     
+    #create initial parse tree
     tree = parser.parse(args.source.read())
 
+    #desugar binary operators
     transformer = Transformer()
     tree = transformer.transform(tree)
 
+    #decorate tree with types
     inferrer = TypeInferrer(types);
     inferrer.visit(tree)
 
+    #fill code array with assembly instructions
     code = []
     generator = Generator(code, types)
     generator.visit(tree)
 
+    #output code to file or stdout
     generate_code(args.name, generator.variables, code, args.target)
 
 if __name__ == '__main__' and not sys.flags.interactive:
