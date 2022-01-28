@@ -64,23 +64,25 @@ quack_grammar = """
 """
 
 #operates on the tree as it is created
+#desugars binary operators into method calls
 @lark.v_args(tree=True)
 class Transformer(lark.Transformer):
-    def plus(self, tree):
+    def plus(self, tree): #desugar "a + b" into "a.PLUS(b)"
         return self.op(tree, 'PLUS')
-    def minus(self, tree):
+    def minus(self, tree): #desugar "a - b" into "a.MINUS(b)"
         return self.op(tree, 'MINUS')
-    def mul(self, tree):
+    def mul(self, tree): #desugar "a * b" into "a.TIMES(b)"
         return self.op(tree, 'TIMES')
-    def div(self, tree):
+    def div(self, tree): #desugar "a / b" into "a.DIVIDE(b)"
         return self.op(tree, 'DIVIDE')
-    def neg(self, tree):
+    def neg(self, tree): #desugar "-a" into "a.NEG()"
         return self.op(tree, 'NEG')
+    #create a method call subtree with the appropriate binary op function
     def op(self, tree, op):
         children = [
-            tree.children[0],
-            op,
-            lark.Tree('m_args', tree.children[1:])
+            tree.children[0], #receiver object
+            op, #name of operator
+            lark.Tree('m_args', tree.children[1:]) #argument object, if provided
         ]
         return lark.Tree('m_call', children)
 
