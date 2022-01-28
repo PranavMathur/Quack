@@ -116,34 +116,48 @@ class TypeInferrer(lark.visitors.Visitor_Recursive):
             ret = self.types[left_type]['methods'][m_name]['ret']
             tree.type = ret
 
+#generate assembly code from the parse tree
 class Generator(lark.visitors.Visitor_Recursive):
     def __init__(self, code, types):
+        #store the code array and types table
         super().__init__()
         self.code = code
         self.types = types
-        self.variables = {}
+        self.variables = {} #stores names and types of local variables
     def lit_number(self, tree):
+        #push an integer onto the stack
         self.code.append('const %s' % tree.children[0])
     def lit_true(self, tree):
+        #push a boolean onto the stack
         self.code.append('const true')
     def lit_false(self, tree):
+        #push a boolean onto the stack
         self.code.append('const false')
     def lit_nothing(self, tree):
+        #push a nothing onto the stack
         self.code.append('const nothing')
     def lit_string(self, tree):
+        #push a string onto the stack
         self.code.append('const %s' % tree.children[0])
     def var(self, tree):
+        #load a local variable onto the stack
         self.code.append('load %s' % tree.children[0])
     def assign(self, tree):
+        #store the top value on the stack into a local variable
         name = tree.children[0]
         type = tree.children[1]
+        #map the variable name to the type of the value
         self.variables[name] = type
         self.code.append('store %s' % name)
     def m_call(self, tree):
+        #emit a method call command and possibly a roll
         m_name = str(tree.children[1])
+        #arithmetic operators need to roll so that the receiver
+        #is the first thing popped off the stack
         if m_name in ('PLUS', 'MINUS', 'TIMES', 'DIVIDE'):
-            self.code.append('roll 1')
+            self.code.append('roll 1') #all binary ops have two args
         left_type = tree.children[0].type
+        #emit a method call of the correct type
         self.code.append('call %s:%s' % (left_type, tree.children[1]))
 
 def generate_code(name, variables, code, out):
