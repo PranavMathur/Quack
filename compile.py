@@ -86,32 +86,33 @@ class Transformer(lark.Transformer):
         ]
         return lark.Tree('m_call', children)
 
+#assigns a type to each node in the tree
 class TypeInferrer(lark.visitors.Visitor_Recursive):
     def __init__(self, types):
-        self.variables = {}
-        self.types = types
+        self.variables = {} #set to store types of initialized variables
+        self.types = types #method tables - used to find return values
     def __default__(self, tree):
-        literals = {
+        literals = { #map between node names and builtin type names
             'lit_number': 'Int',
             'lit_string': 'String',
             'lit_true': 'Boolean',
             'lit_false': 'Boolean',
             'lit_nothing': 'Nothing'
         }
-        if tree.data in literals:
+        if tree.data in literals: #assign builtin type for literal token
             tree.type = literals[tree.data]
-        elif tree.data == 'var':
+        elif tree.data == 'var': #search variables map for assigned type
             name = str(tree.children[0])
-            tree.type = self.variables.get(name, '')
-        elif tree.data == 'assign':
-            #tree.type = tree.children[2].type
+            tree.type = self.variables[name]
+        elif tree.data == 'assign': #map the variable name to the given type
             left = tree.children[0]
             tree.type = tree.children[1]
-            if isinstance(left, lark.Token):
+            if isinstance(left, lark.Token): #shouldn't be necessary
                 self.variables[str(left)] = tree.type
-        elif tree.data == 'm_call':
-            left_type = tree.children[0].type
-            m_name = tree.children[1]
+        elif tree.data == 'm_call': #query the table for the return type
+            left_type = tree.children[0].type #find type of receiver
+            m_name = tree.children[1] #get name of called function
+            #retrieve return type of called function of receiver
             ret = self.types[left_type]['methods'][m_name]['ret']
             tree.type = ret
 
