@@ -323,7 +323,13 @@ obj_ref native_String_plus(void ) {
     obj_ref other = (vm_fp - 1)->obj;
     assert_is_type(other, the_class_String);
     obj_String other_str = (obj_String) other;
-    char *s = (char *) malloc(sizeof(char) * 1024);
+    //calculate the lengths of the two strings
+    size_t this_len = 0;
+    size_t other_len = 0;
+    while (this_str->text[this_len] != '\0') this_len++;
+    while (other_str->text[other_len] != '\0') other_len++;
+    size_t sum_len = this_len + other_len;
+    char *s = (char *) malloc(sizeof(char) * sum_len);
     s[0] = '\0';
     strcat(s, this_str->text);
     strcat(s, other_str->text);
