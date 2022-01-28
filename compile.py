@@ -165,9 +165,10 @@ def generate_code(name, variables, code, out):
     emit('.class %s:Obj\n\n.method $constructor' % name)
     if variables:
         emit('.local %s' % ','.join(i for i in variables))
-    #emit('\tenter')
+    emit('\tenter')
     for line in code:
         emit('\t' + line)
+    emit('\tconst nothing')
     emit('\treturn 0')
 
 #read an input and output file from the command line arguments
