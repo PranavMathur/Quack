@@ -6,4 +6,8 @@ if [ "$name" == "" ]; then
 fi
 
 python3 compile.py "$1" "${name}.asm"
-python3 assemble.py "${name}.asm" "OBJ/${name}.json"
+
+ret=$?
+if [ $ret -eq 0 ]; then
+    python3 assemble.py "${name}.asm" "OBJ/${name}.json"
+fi
