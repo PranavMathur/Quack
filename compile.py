@@ -139,6 +139,9 @@ class Generator(lark.visitors.Visitor_Recursive):
         self.variables[name] = type
         self.code.append('store %s' % name)
     def m_call(self, tree):
+        m_name = str(tree.children[1])
+        if m_name in ('PLUS', 'MINUS', 'TIMES', 'DIVIDE'):
+            self.code.append('roll 1')
         left_type = tree.children[0].type
         self.code.append('call %s:%s' % (left_type, tree.children[1]))
 
