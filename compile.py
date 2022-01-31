@@ -34,7 +34,7 @@ quack_grammar = """
 
     ?equality: comparison
              | equality "==" comparison -> equals
-             | equality "!=" comparison -> not_equals
+             | equality "!=" comparison -> notequals
 
     ?comparison: sum
                | comparison "<"  sum -> less
@@ -47,8 +47,8 @@ quack_grammar = """
         | sum "-" product -> minus
 
     ?product: atom
-            | product "*" atom -> mul
-            | product "/" atom -> div
+            | product "*" atom -> times
+            | product "/" atom -> divide
 
     ?atom: NUMBER      -> lit_number
          | "-" atom    -> neg
@@ -75,40 +75,36 @@ quack_grammar = """
     %ignore WS
 """
 
+ops = (
+    'plus',
+    'minus',
+    'times',
+    'divide',
+    'neg',
+    'equals',
+    'notequals',
+    'less',
+    'atmost',
+    'more',
+    'atleast'
+)
+
 #operates on the tree as it is created
 #desugars binary operators into method calls
 @lark.v_args(tree=True)
 class Transformer(lark.Transformer):
-    def plus(self, tree): #desugar "a + b" into "a.PLUS(b)"
-        return self.op(tree, 'PLUS')
-    def minus(self, tree): #desugar "a - b" into "a.MINUS(b)"
-        return self.op(tree, 'MINUS')
-    def mul(self, tree): #desugar "a * b" into "a.TIMES(b)"
-        return self.op(tree, 'TIMES')
-    def div(self, tree): #desugar "a / b" into "a.DIVIDE(b)"
-        return self.op(tree, 'DIVIDE')
-    def neg(self, tree): #desugar "-a" into "a.NEG()"
-        return self.op(tree, 'NEG')
-    def equals(self, tree): #desugar "a == b" into "a.EQUALS(b)"
-        return self.op(tree, 'EQUALS')
-    def not_equals(self, tree): #desugar "a != b" into "a.NOTEQUALS(b)"
-        return self.op(tree, 'NOTEQUALS')
-    def less(self, tree): #desugar "a < b" into "a.LESS(b)"
-        return self.op(tree, 'LESS')
-    def atmost(self, tree): #desugar "a <= b" into "a.ATMOST(b)"
-        return self.op(tree, 'ATMOST')
-    def more(self, tree): #desugar "a > b" into "a.MORE(b)"
-        return self.op(tree, 'MORE')
-    def atleast(self, tree): #desugar "a >= b" into "a.ATLEAST(b)"
-        return self.op(tree, 'ATLEAST')
     #create a method call subtree with the appropriate binary op function
-    def op(self, tree, op):
-        children = [
-            tree.children[0], #receiver object
-            op, #name of operator
-            lark.Tree('m_args', tree.children[1:]) #argument object, if provided
-        ]
-        return lark.Tree('m_call', children)
+    def __default__(self, data, children, meta):
+        #desugar binary operations into method calls
+        if data in ops: #only desugar certain nodes
+            new_children = [
+                children[0], #receiver object
+                data.upper(), #name of operator
+                lark.Tree('m_args', children[1:]) #argument object, if provided
+            ]
+            return lark.Tree('m_call', new_children)
+        else:
+            return lark.Tree(data, children, meta)
 
 #assigns a type to each node in the tree
 class TypeInferrer(lark.visitors.Visitor_Recursive):
