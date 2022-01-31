@@ -20,7 +20,7 @@ quack_grammar = """
 
     ?l_exp: NAME
 
-    ?r_exp: sum
+    ?r_exp: expr
           | m_call
 
     m_call: r_exp "." m_name "(" m_args ")" -> m_call
@@ -29,6 +29,18 @@ quack_grammar = """
 
     ?m_args: r_exp ("," r_exp)* (",")?
            |
+
+    ?expr: equality
+
+    ?equality: comparison
+             | equality "==" comparison -> equals
+             | equality "!=" comparison -> not_equals
+
+    ?comparison: sum
+               | comparison "<"  sum -> less
+               | comparison "<=" sum -> atmost
+               | comparison ">"  sum -> more
+               | comparison ">=" sum -> atleast
 
     ?sum: product
         | sum "+" product -> plus
@@ -199,6 +211,10 @@ def main():
     
     #create initial parse tree
     tree = parser.parse(args.source.read())
+
+    if args.tree:
+        print(tree.pretty())
+        return
 
     #desugar binary operators
     transformer = Transformer()
