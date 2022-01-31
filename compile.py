@@ -15,6 +15,7 @@ quack_grammar = """
               | assignment ";"
 
     assignment: l_exp ":" type "=" r_exp -> assign
+              | l_exp "=" r_exp          -> assign_imp
 
     ?type: NAME
 
@@ -129,6 +130,10 @@ class TypeInferrer(lark.visitors.Visitor_Recursive):
             tree.type = tree.children[1]
             if isinstance(left, lark.Token): #shouldn't be necessary
                 self.variables[str(left)] = tree.type
+        elif tree.data == 'assign_imp':
+            left = tree.children[0]
+            tree.type = tree.children[1].type
+            self.variables[str(left)] = tree.type
         elif tree.data == 'm_call': #query the table for the return type
             left_type = tree.children[0].type #find type of receiver
             m_name = tree.children[1] #get name of called function
@@ -136,6 +141,7 @@ class TypeInferrer(lark.visitors.Visitor_Recursive):
             try:
                 ret = self.types[left_type]['methods'][m_name]['ret']
             except KeyError:
+                print(f'Could not resolve return type of {left_type}.{m_name}', file=sys.stderr)
                 ret = "Obj"
             tree.type = ret
 
@@ -171,6 +177,15 @@ class Generator(lark.visitors.Visitor_Recursive):
         type = tree.children[1]
         #map the variable name to the type of the value
         self.variables[name] = type
+        #emit a store instruction
+        self.code.append('store %s' % name)
+    def assign_imp(self, tree):
+        #store the top value on the stack into a local variable
+        name = tree.children[0]
+        type = tree.type
+        #map the variable name to the type of the value
+        self.variables[name] = type
+        #emit a store instruction
         self.code.append('store %s' % name)
     def m_call(self, tree):
         #emit a method call command and possibly a roll
