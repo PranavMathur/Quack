@@ -5,7 +5,6 @@ import argparse
 import json
 import sys
 
-#this grammar was created during office hours on 1/19/22
 quack_grammar = """
     ?start: program
 
@@ -190,10 +189,11 @@ class Generator(lark.visitors.Visitor_Recursive):
     def m_call(self, tree):
         #emit a method call command and possibly a roll
         m_name = str(tree.children[1])
-        #arithmetic operators need to roll so that the receiver
+        #functions need to roll so that the receiver
         #is the first thing popped off the stack
-        if m_name in ('PLUS', 'MINUS', 'TIMES', 'DIVIDE'):
-            self.code.append('roll 1') #all binary ops have two args
+        num_ops = len(tree.children[2].children)
+        if num_ops: #don't roll for functions with no arguments
+            self.code.append('roll %d' % num_ops)
         left_type = tree.children[0].type
         #emit a method call of the correct type
         self.code.append('call %s:%s' % (left_type, tree.children[1]))
