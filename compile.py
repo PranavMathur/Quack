@@ -53,7 +53,7 @@ quack_grammar = """
     ?atom: NUMBER      -> lit_number
          | "-" atom    -> neg
          | l_exp       -> var
-         | "(" sum ")"
+         | "(" expr ")"
          | boolean
          | nothing
          | string      -> lit_string
@@ -89,6 +89,18 @@ class Transformer(lark.Transformer):
         return self.op(tree, 'DIVIDE')
     def neg(self, tree): #desugar "-a" into "a.NEG()"
         return self.op(tree, 'NEG')
+    def equals(self, tree): #desugar "a == b" into "a.EQUALS(b)"
+        return self.op(tree, 'EQUALS')
+    def not_equals(self, tree): #desugar "a != b" into "a.NOTEQUALS(b)"
+        return self.op(tree, 'NOTEQUALS')
+    def less(self, tree): #desugar "a < b" into "a.LESS(b)"
+        return self.op(tree, 'LESS')
+    def atmost(self, tree): #desugar "a <= b" into "a.ATMOST(b)"
+        return self.op(tree, 'ATMOST')
+    def more(self, tree): #desugar "a > b" into "a.MORE(b)"
+        return self.op(tree, 'MORE')
+    def atleast(self, tree): #desugar "a >= b" into "a.ATLEAST(b)"
+        return self.op(tree, 'ATLEAST')
     #create a method call subtree with the appropriate binary op function
     def op(self, tree, op):
         children = [
@@ -125,7 +137,10 @@ class TypeInferrer(lark.visitors.Visitor_Recursive):
             left_type = tree.children[0].type #find type of receiver
             m_name = tree.children[1] #get name of called function
             #retrieve return type of called function of receiver
-            ret = self.types[left_type]['methods'][m_name]['ret']
+            try:
+                ret = self.types[left_type]['methods'][m_name]['ret']
+            except KeyError:
+                ret = "Obj"
             tree.type = ret
 
 #generate assembly code from the parse tree
