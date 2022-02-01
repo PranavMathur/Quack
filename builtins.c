@@ -424,7 +424,7 @@ vm_Word method_Boolean_string[] = {
 
 /* The Boolean Class (a singleton) */
 struct  class_struct  the_class_Boolean_struct = {
-        .header = {.class_name = "Boolean",
+        .header = {.class_name = "Bool",
                    .healthy_class_tag = HEALTHY,
                    .super = the_class_Obj,
                    .n_fields = 0,

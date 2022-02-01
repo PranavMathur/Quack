@@ -38,13 +38,13 @@
                 "params": [],
                 "ret": "Nothing"
             },
-            "equals": {
+            "EQUALS": {
                 "params": [
                     "Obj"
                 ],
                 "ret": "Bool"
             },
-            "less": {
+            "LESS": {
                 "params": [
                     "Int"
                 ],
