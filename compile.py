@@ -115,8 +115,8 @@ class TypeInferrer(lark.visitors.Visitor_Recursive):
         literals = { #map between node names and builtin type names
             'lit_number': 'Int',
             'lit_string': 'String',
-            'lit_true': 'Boolean',
-            'lit_false': 'Boolean',
+            'lit_true': 'Bool',
+            'lit_false': 'Bool',
             'lit_nothing': 'Nothing'
         }
         if tree.data in literals: #assign builtin type for literal token
