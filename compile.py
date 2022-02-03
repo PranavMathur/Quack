@@ -215,6 +215,18 @@ def generate_code(name, variables, code, out):
     #return, popping zero arguments
     emit('\treturn 0')
 
+#check if the first argument is a subclass of the second argument
+def is_compatible(typ, sup, types):
+    if typ == sup: #most common check - return true if args are equal
+        return True
+    #traverse up the tree while match is not found
+    while types[typ]['super'] != typ:
+        #set typ to typ's supertype
+        typ = types[typ]['super']
+        if typ == sup: #return true if match is found
+            return True
+    return False #no match was found
+
 #read an input and output file from the command line arguments
 def cli_parser():
     parser = argparse.ArgumentParser(prog='translate')
