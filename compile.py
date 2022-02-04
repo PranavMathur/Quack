@@ -15,11 +15,14 @@ quack_grammar = """
               | if_stmt
               | while_lp
 
-    if_stmt: "if" r_exp block ("elif" r_exp block)* ("else" block)?
+    if_stmt: "if" condition block ("elif" condition block)* ("else" block)?
 
-    while_lp: "while" r_exp block
+    while_lp: "while" condition block
+
+    condition: r_exp
 
     block: "{" statement* "}"
+         | statement
 
     assignment: l_exp ":" type "=" r_exp -> assign
               | l_exp "=" r_exp          -> assign_imp
