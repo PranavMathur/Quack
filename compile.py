@@ -27,8 +27,8 @@ quack_grammar = """
 
     ?m_name: NAME
 
-    ?m_args: r_exp ("," r_exp)* (",")?
-           |
+    m_args: r_exp ("," r_exp)* (",")?
+          |
 
     ?expr: equality
 
@@ -126,7 +126,7 @@ class TypeInferrer(lark.visitors.Visitor_Recursive):
             tree.type = self.variables[name]
         elif tree.data == 'assign': #map the variable name to the given type
             left = tree.children[0]
-            tree.type = tree.children[1]
+            tree.type = str(tree.children[1])
             if isinstance(left, lark.Token): #shouldn't be necessary
                 self.variables[str(left)] = tree.type
         elif tree.data == 'assign_imp':
@@ -135,14 +135,35 @@ class TypeInferrer(lark.visitors.Visitor_Recursive):
             self.variables[str(left)] = tree.type
         elif tree.data == 'm_call': #query the table for the return type
             left_type = tree.children[0].type #find type of receiver
-            m_name = tree.children[1] #get name of called function
-            #retrieve return type of called function of receiver
+            m_name = str(tree.children[1]) #get name of called function
+            #retrieve parameter/return types of called function of receiver
             try:
-                ret = self.types[left_type]['methods'][m_name]['ret']
+                #attempt to retrieve information about method
+                method = self.types[left_type]['methods'][m_name]
             except KeyError:
+                #fail if method not found
+                #TODO: raise ValueError
                 print(f'Could not resolve return type of {left_type}.{m_name}', file=sys.stderr)
-                ret = "Obj"
-            tree.type = ret
+                ret_type = "Obj"
+            else:
+                ret_type = method['ret'] #retrieve return type of method
+                args = tree.children[2].children #fetch children of m_args
+                #pluck types of given arguments
+                arg_types = [child.type for child in args]
+                #fetch types of expected arguments
+                exp_types = method['params']
+                #first check - check number of given arguments
+                if len(arg_types) != len(exp_types):
+                    #grammar!
+                    plural = 's' if len(exp_types) > 1 else ''
+                    e = (m_name, len(exp_types), plural, len(arg_types))
+                    raise ValueError('%r expected %d arg%s, received %d' % e)
+                #second check - check types of given arguments
+                for rec, exp in zip(arg_types, exp_types):
+                    if not is_compatible(rec, exp, self.types):
+                        e = (m_name, exp, rec)
+                        raise ValueError('%r expected %r, received %r' % e)
+            tree.type = ret_type #set overall type of m_call node
 
 #generate assembly code from the parse tree
 class Generator(lark.visitors.Visitor_Recursive):
