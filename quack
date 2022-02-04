@@ -11,3 +11,9 @@ ret=$?
 if [ $ret -eq 0 ]; then
     python3 assemble.py "${name}.asm" "OBJ/${name}.json"
 fi
+
+ret=$?
+
+if [ $ret -eq 0 ]; then
+    bin/tiny_vm "$name"
+fi
