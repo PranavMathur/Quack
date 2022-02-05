@@ -17,7 +17,13 @@ quack_grammar = """
               | if_stmt
               | while_lp
 
-    if_stmt: "if" condition block ("elif" condition block)* ("else" block)?
+    if_stmt: "if" condition block elifs else
+
+    elifs: elif*
+
+    elif: "elif" condition block
+
+    else: ("else" block)?
 
     while_lp: "while" condition block
 
@@ -211,13 +217,15 @@ class Generator(lark.visitors.Visitor_Recursive):
     def label(self, prefix):
         #generates a unique label name with the given prefix
         num = next(self.labels[prefix]) #get current number for given prefix
-        return f'{prefix}{num}'
+        return f'{prefix}_{num}'
     def visit(self, tree):
         #"and/or" expressions are handled differently
         if tree.data == 'and_exp':
             self.and_exp(tree)
         elif tree.data == 'or_exp':
             self.or_exp(tree)
+        elif tree.data == 'if_stmt':
+            self.if_stmt(tree)
         else:
             #most expressions are traversed postorder
             return super().visit(tree)
@@ -313,6 +321,71 @@ class Generator(lark.visitors.Visitor_Recursive):
         #if either jump was taken, push true as the result
         self.emit('const true')
         #or expression is over - join point
+        self.emit('%s:' % join_label, False)
+    def if_stmt(self, tree):
+        #unpack children nodes for convenience
+        if_cond, if_block, elifs, _else = tree.children
+
+        join_label = self.label('join') #generate join label - emitted at end
+        #holds information about blocks after if-statement
+        #used for generating labels
+        meta = []
+        for child in elifs.children:
+            meta.append('elif') #add "elif" to meta for each elif block
+        if _else.children:
+            meta.append('else') #if else block exists, add "else" to meta
+        labels = [self.label(i) for i in meta]
+
+        #unconditionally evaluate the if statement's condition
+        self.visit(if_cond)
+        #emit the correct label to jump to if the condition was false
+        if not labels:
+            #if the if statement is alone, jump to the join point
+            self.emit('jump_ifnot %s' % join_label)
+        else:
+            #if the if statement has friends, jump to the next condition
+            self.emit('jump_ifnot %s' % labels[0])
+        #if condition was true, execute the block
+        self.visit(if_block)
+        if labels:
+            #jump past elif/else blocks to the join point
+            self.emit('jump %s' % join_label)
+
+        label_index = 0 #used to get current/next labels
+        #generate code for elif blocks, if there are any
+        for _elif in elifs.children:
+            #unpack condition/block for convenience
+            elif_cond, elif_block = _elif.children
+            #get label that points to this block
+            current_label = labels[label_index]
+            label_index += 1
+            #get label that will be jumped to if this block doesn't execute
+            next_label = join_label if label_index == len(labels) else labels[label_index]
+
+            #emit this block's label
+            self.emit('%s:' % current_label, False)
+            #evaluate the elif's condition
+            self.visit(elif_cond)
+            #jump to next block or join point if condition was false
+            self.emit('jump_ifnot %s' % next_label)
+            #execute block if condition was true
+            self.visit(elif_block)
+            #only jump to join if there is a block in between here and there
+            if next_label != join_label:
+                #jump past rest of the blocks after execution
+                self.emit('jump %s' % join_label)
+
+        #generate code for else block, if it exists
+        if _else.children:
+            #else label is always the last in labels
+            else_label = labels[-1]
+            #emit this block's label
+            self.emit('%s:' % else_label, False)
+            else_block = _else.children[0]
+            #execute the else block
+            self.visit(else_block)
+
+        #emit the join label - this point will always be reached
         self.emit('%s:' % join_label, False)
 
 #outputs assembly code to given stream
