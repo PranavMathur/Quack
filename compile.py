@@ -216,7 +216,7 @@ class Generator(lark.visitors.Visitor_Recursive):
         #"and/or" expressions are handled differently
         if tree.data == 'and_exp':
             self.and_exp(tree)
-        if tree.data == 'or_exp':
+        elif tree.data == 'or_exp':
             self.or_exp(tree)
         else:
             #most expressions are traversed postorder
@@ -272,7 +272,7 @@ class Generator(lark.visitors.Visitor_Recursive):
         self.visit(left)
         #generate unique label names
         false_label = self.label('and')
-        end_label = self.label('and')
+        join_label = self.label('and')
         #if the first expression evaluates to false, jump to join point
         self.emit('jump_ifnot %s' % false_label)
         #generate assembly for second expression
@@ -283,20 +283,20 @@ class Generator(lark.visitors.Visitor_Recursive):
         #if neither jump was taken, push true as the result
         self.emit('const true')
         #skip past the join point
-        self.emit('jump %s' % end_label)
+        self.emit('jump %s' % join_label)
         #join point: execution will come here if either expression is false
         self.emit('%s:' % false_label, False)
         #if either jump was taken, push false as the result
         self.emit('const false')
         #and expression is over - join point
-        self.emit('%s:' % end_label, False)
+        self.emit('%s:' % join_label, False)
     def or_exp(self, tree):
         left, right = tree.children
         #generate assembly for first expression, which will always run
         self.visit(left)
         #generate unique label names
         true_label = self.label('or')
-        end_label = self.label('or')
+        join_label = self.label('or')
         #if the first expression evaluates to true, jump to join point
         self.emit('jump_if %s' % true_label)
         #generate assembly for second expression
@@ -307,13 +307,13 @@ class Generator(lark.visitors.Visitor_Recursive):
         #if neither jump was taken, push false as the result
         self.emit('const false')
         #skip past the join point
-        self.emit('jump %s' % end_label)
+        self.emit('jump %s' % join_label)
         #join point: execution will come here if either expression is true
         self.emit('%s:' % true_label, False)
         #if either jump was taken, push true as the result
         self.emit('const true')
         #or expression is over - join point
-        self.emit('%s:' % end_label, False)
+        self.emit('%s:' % join_label, False)
 
 #outputs assembly code to given stream
 def generate_code(name, variables, code, out):
