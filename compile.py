@@ -162,8 +162,8 @@ class TypeInferrer(lark.visitors.Visitor_Recursive):
             except KeyError:
                 #fail if method not found
                 #TODO: raise ValueError
-                print(f'Could not resolve return type of {left_type}.{m_name}', file=sys.stderr)
-                ret_type = "Obj"
+                err = f'Could not resolve return type of {left_type}.{m_name}'
+                raise ValueError(err) from None
             else:
                 ret_type = method['ret'] #retrieve return type of method
                 args = tree.children[2].children #fetch children of m_args
