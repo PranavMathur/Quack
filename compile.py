@@ -165,7 +165,13 @@ class TypeInferrer(lark.visitors.Visitor_Recursive):
             #check that both operands are Bools
             if left.type != 'Bool' or right.type != 'Bool':
                 raise ValueError('Operands of and/or must be Bool')
-            #the type of a logical expression is always Boolean
+            #the type of a logical expression is always Bool
+            tree.type = 'Bool'
+        elif tree.data == 'condition':
+            #check that conditional has type Bool
+            if tree.children[0].type != 'Bool':
+                raise ValueError('Type of condition must be Bool')
+            #the type of a condition is always Bool
             tree.type = 'Bool'
         elif tree.data == 'm_call': #query the table for the return type
             left_type = tree.children[0].type #find type of receiver
