@@ -156,10 +156,14 @@
                 "params": [],
                 "ret": "Nothing"
             },
-            "equals": {
+            "EQUALS": {
                 "params": [
                     "Obj"
                 ],
+                "ret": "Bool"
+            },
+            "NEGATE": {
+                "params": [],
                 "ret": "Bool"
             }
         },

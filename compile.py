@@ -63,6 +63,7 @@ quack_grammar = """
 
     ?atom: NUMBER      -> lit_number
          | "-" atom    -> neg
+         | "not" atom    -> negate
          | l_exp       -> var
          | "(" expr ")"
          | boolean
@@ -92,6 +93,7 @@ ops = (
     'times',
     'divide',
     'neg',
+    'negate',
     'equals',
     'notequals',
     'less',
