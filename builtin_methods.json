@@ -14,7 +14,7 @@
                 "params": [],
                 "ret": "Nothing"
             },
-            "equals": {
+            "EQUALS": {
                 "params": [
                     "Obj"
                 ],
@@ -96,13 +96,13 @@
                 "params": [],
                 "ret": "Nothing"
             },
-            "equals": {
+            "EQUALS": {
                 "params": [
                     "Obj"
                 ],
                 "ret": "Bool"
             },
-            "less": {
+            "LESS": {
                 "params": [
                     "String"
                 ],
@@ -132,7 +132,7 @@
                 "params": [],
                 "ret": "Nothing"
             },
-            "equals": {
+            "EQUALS": {
                 "params": [
                     "Obj"
                 ],
