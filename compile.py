@@ -213,9 +213,11 @@ class Generator(lark.visitors.Visitor_Recursive):
         self.labels[prefix] += 1 #increment this prefix's count
         return f'{prefix}{num}'
     def visit(self, tree):
+        #"and/or" expressions are handled differently
         if tree.data == 'and_exp':
-            #and expressions are handled uniquely
             self.and_exp(tree)
+        if tree.data == 'or_exp':
+            self.or_exp(tree)
         else:
             #most expressions are traversed postorder
             return super().visit(tree)
@@ -271,22 +273,46 @@ class Generator(lark.visitors.Visitor_Recursive):
         #generate unique label names
         false_label = self.label('and')
         end_label = self.label('and')
-        #if the first expression evaluates to false, jump to exit point
+        #if the first expression evaluates to false, jump to join point
         self.emit('jump_ifnot %s' % false_label)
         #generate assembly for second expression
         #this will only run if the first expression evaluated to true
         self.visit(right)
-        #if the second expression evaluates to false, jump to exit point
+        #if the second expression evaluates to false, jump to join point
         self.emit('jump_ifnot %s' % false_label)
         #if neither jump was taken, push true as the result
         self.emit('const true')
-        #skip past the exit point
+        #skip past the join point
         self.emit('jump %s' % end_label)
-        #exit point: execution will come here if either expression is false
+        #join point: execution will come here if either expression is false
         self.emit('%s:' % false_label, False)
         #if either jump was taken, push false as the result
         self.emit('const false')
         #and expression is over - join point
+        self.emit('%s:' % end_label, False)
+    def or_exp(self, tree):
+        left, right = tree.children
+        #generate assembly for first expression, which will always run
+        self.visit(left)
+        #generate unique label names
+        true_label = self.label('or')
+        end_label = self.label('or')
+        #if the first expression evaluates to true, jump to join point
+        self.emit('jump_if %s' % true_label)
+        #generate assembly for second expression
+        #this will only run if the first expression evaluated to false
+        self.visit(right)
+        #if the second expression evaluates to true, jump to join point
+        self.emit('jump_if %s' % true_label)
+        #if neither jump was taken, push false as the result
+        self.emit('const false')
+        #skip past the join point
+        self.emit('jump %s' % end_label)
+        #join point: execution will come here if either expression is true
+        self.emit('%s:' % true_label, False)
+        #if either jump was taken, push true as the result
+        self.emit('const true')
+        #or expression is over - join point
         self.emit('%s:' % end_label, False)
 
 #outputs assembly code to given stream
