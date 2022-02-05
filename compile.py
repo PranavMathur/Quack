@@ -4,6 +4,7 @@ import lark
 import argparse
 import json
 import sys
+from collections import defaultdict as dd
 
 quack_grammar = """
     ?start: program
@@ -152,6 +153,13 @@ class TypeInferrer(lark.visitors.Visitor_Recursive):
             left = tree.children[0]
             tree.type = tree.children[1].type
             self.variables[str(left)] = tree.type
+        elif tree.data in ('and_exp', 'or_exp'):
+            left, right = tree.children
+            #check that both operands are Bools
+            if left.type != 'Bool' or right.type != 'Bool':
+                raise ValueError('Operands of and/or must be Bool')
+            #the type of a logical expression is always Boolean
+            tree.type = 'Bool'
         elif tree.data == 'm_call': #query the table for the return type
             left_type = tree.children[0].type #find type of receiver
             m_name = str(tree.children[1]) #get name of called function
@@ -161,7 +169,6 @@ class TypeInferrer(lark.visitors.Visitor_Recursive):
                 method = self.types[left_type]['methods'][m_name]
             except KeyError:
                 #fail if method not found
-                #TODO: raise ValueError
                 err = f'Could not resolve return type of {left_type}.{m_name}'
                 raise ValueError(err) from None
             else:
@@ -186,36 +193,50 @@ class TypeInferrer(lark.visitors.Visitor_Recursive):
 
 #generate assembly code from the parse tree
 class Generator(lark.visitors.Visitor_Recursive):
-    def visit(self, tree):
-        for child in tree.children:
-            if isinstance(child, lark.Tree):
-                self.visit(child)
-        self._call_userfunc(tree)
-        return tree
     def __init__(self, code, types):
         #store the code array and types table
         super().__init__()
         self.code = code
         self.types = types
         self.variables = {} #stores names and types of local variables
+        self.labels = dd(int) #stores count of label prefixes
+    def emit(self, line, tab=True):
+        #emits a line of code to the output array
+        #adds a tab to the beginning by default
+        if tab:
+            self.code.append('\t' + line)
+        else:
+            self.code.append(line)
+    def label(self, prefix):
+        #generates a unique label name with the given prefix
+        num = self.labels[prefix] #get current number for given prefix
+        self.labels[prefix] += 1 #increment this prefix's count
+        return f'{prefix}{num}'
+    def visit(self, tree):
+        if tree.data == 'and_exp':
+            #and expressions are handled uniquely
+            self.and_exp(tree)
+        else:
+            #most expressions are traversed postorder
+            return super().visit(tree)
     def lit_number(self, tree):
         #push an integer onto the stack
-        self.code.append('const %s' % tree.children[0])
+        self.emit('const %s' % tree.children[0])
     def lit_true(self, tree):
         #push a boolean onto the stack
-        self.code.append('const true')
+        self.emit('const true')
     def lit_false(self, tree):
         #push a boolean onto the stack
-        self.code.append('const false')
+        self.emit('const false')
     def lit_nothing(self, tree):
         #push a nothing onto the stack
-        self.code.append('const nothing')
+        self.emit('const nothing')
     def lit_string(self, tree):
         #push a string onto the stack
-        self.code.append('const %s' % tree.children[0])
+        self.emit('const %s' % tree.children[0])
     def var(self, tree):
         #load a local variable onto the stack
-        self.code.append('load %s' % tree.children[0])
+        self.emit('load %s' % tree.children[0])
     def assign(self, tree):
         #store the top value on the stack into a local variable
         name = tree.children[0]
@@ -223,7 +244,7 @@ class Generator(lark.visitors.Visitor_Recursive):
         #map the variable name to the type of the value
         self.variables[name] = type
         #emit a store instruction
-        self.code.append('store %s' % name)
+        self.emit('store %s' % name)
     def assign_imp(self, tree):
         #store the top value on the stack into a local variable
         name = tree.children[0]
@@ -231,7 +252,7 @@ class Generator(lark.visitors.Visitor_Recursive):
         #map the variable name to the type of the value
         self.variables[name] = type
         #emit a store instruction
-        self.code.append('store %s' % name)
+        self.emit('store %s' % name)
     def m_call(self, tree):
         #emit a method call command and possibly a roll
         m_name = str(tree.children[1])
@@ -239,10 +260,34 @@ class Generator(lark.visitors.Visitor_Recursive):
         #is the first thing popped off the stack
         num_ops = len(tree.children[2].children)
         if num_ops: #don't roll for functions with no arguments
-            self.code.append('roll %d' % num_ops)
+            self.emit('roll %d' % num_ops)
         left_type = tree.children[0].type
         #emit a method call of the correct type
-        self.code.append('call %s:%s' % (left_type, tree.children[1]))
+        self.emit('call %s:%s' % (left_type, tree.children[1]))
+    def and_exp(self, tree):
+        left, right = tree.children
+        #generate assembly for first expression, which will always run
+        self.visit(left)
+        #generate unique label names
+        false_label = self.label('and')
+        end_label = self.label('and')
+        #if the first expression evaluates to false, jump to exit point
+        self.emit('jump_ifnot %s' % false_label)
+        #generate assembly for second expression
+        #this will only run if the first expression evaluated to true
+        self.visit(right)
+        #if the second expression evaluates to false, jump to exit point
+        self.emit('jump_ifnot %s' % false_label)
+        #if neither jump was taken, push true as the result
+        self.emit('const true')
+        #skip past the exit point
+        self.emit('jump %s' % end_label)
+        #exit point: execution will come here if either expression is false
+        self.emit('%s:' % false_label, False)
+        #if either jump was taken, push false as the result
+        self.emit('const false')
+        #and expression is over - join point
+        self.emit('%s:' % end_label, False)
 
 #outputs assembly code to given stream
 def generate_code(name, variables, code, out):
@@ -255,7 +300,7 @@ def generate_code(name, variables, code, out):
     emit('\tenter')
     #emit each line, indented by one tab
     for line in code:
-        emit('\t' + line)
+        emit(line)
     #push return value of constructor
     emit('\tconst nothing')
     #return, popping zero arguments
