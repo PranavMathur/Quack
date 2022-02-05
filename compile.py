@@ -41,7 +41,13 @@ quack_grammar = """
     m_args: r_exp ("," r_exp)* (",")?
           |
 
-    ?expr: equality
+    ?expr: or_exp
+
+    ?or_exp: and_exp
+           | or_exp "or" and_exp -> or_exp
+
+    ?and_exp: equality
+            | and_exp "and" equality -> and_exp
 
     ?equality: comparison
              | equality "==" comparison -> equals
@@ -180,6 +186,12 @@ class TypeInferrer(lark.visitors.Visitor_Recursive):
 
 #generate assembly code from the parse tree
 class Generator(lark.visitors.Visitor_Recursive):
+    def visit(self, tree):
+        for child in tree.children:
+            if isinstance(child, lark.Tree):
+                self.visit(child)
+        self._call_userfunc(tree)
+        return tree
     def __init__(self, code, types):
         #store the code array and types table
         super().__init__()
