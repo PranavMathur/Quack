@@ -4,6 +4,7 @@ import lark
 import argparse
 import json
 import sys
+import itertools
 from collections import defaultdict as dd
 
 quack_grammar = """
@@ -199,7 +200,7 @@ class Generator(lark.visitors.Visitor_Recursive):
         self.code = code
         self.types = types
         self.variables = {} #stores names and types of local variables
-        self.labels = dd(int) #stores count of label prefixes
+        self.labels = dd(itertools.count) #stores count of label prefixes
     def emit(self, line, tab=True):
         #emits a line of code to the output array
         #adds a tab to the beginning by default
@@ -209,8 +210,7 @@ class Generator(lark.visitors.Visitor_Recursive):
             self.code.append(line)
     def label(self, prefix):
         #generates a unique label name with the given prefix
-        num = self.labels[prefix] #get current number for given prefix
-        self.labels[prefix] += 1 #increment this prefix's count
+        num = next(self.labels[prefix]) #get current number for given prefix
         return f'{prefix}{num}'
     def visit(self, tree):
         #"and/or" expressions are handled differently
