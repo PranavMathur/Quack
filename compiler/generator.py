@@ -30,6 +30,8 @@ class Generator(lark.visitors.Visitor_Recursive):
             self.or_exp(tree)
         elif tree.data == 'if_stmt':
             self.if_stmt(tree)
+        elif tree.data == 'while_lp':
+            self.while_lp(tree)
         else:
             #most expressions are traversed postorder
             return super().visit(tree)
@@ -191,6 +193,24 @@ class Generator(lark.visitors.Visitor_Recursive):
 
         #emit the join label - this point will always be reached
         self.emit('%s:' % join_label, False)
+    def while_lp(self, tree):
+        #unpack children nodes for convenience
+        condition, block = tree.children
+        #generate unique labels for block and condition
+        block_label = self.label('block')
+        cond_label = self.label('cond')
+        #unconditionally jump to condition check
+        self.emit('jump %s' % cond_label)
+        #emit label for start of block
+        self.emit('%s:' % block_label, False)
+        #generate code for block
+        self.visit(block)
+        #emit label for condition check
+        self.emit('%s:' % cond_label, False)
+        #generate code for condition check
+        self.visit(condition)
+        #if condition evaluates to true, jump to beginning of block
+        self.emit('jump_if %s' % block_label)
 
 #outputs assembly code to given stream
 def generate_code(name, variables, code, out):
