@@ -10,97 +10,97 @@ from compiler.typechecker import TypeChecker
 from compiler.generator import Generator, generate_code
 
 quack_grammar = """
-    ?start: program
+?start: program
 
-    ?program: statement*
+?program: statement*
 
-    ?statement: r_exp ";"
-              | assignment ";"
-              | if_stmt
-              | while_lp
+?statement: r_exp ";"
+            | assignment ";"
+            | if_stmt
+            | while_lp
 
-    if_stmt: "if" condition block elifs else
+if_stmt: "if" condition block elifs else
 
-    elifs: elif*
+elifs: elif*
 
-    elif: "elif" condition block
+elif: "elif" condition block
 
-    else: ("else" block)?
+else: ("else" block)?
 
-    while_lp: "while" condition block
+while_lp: "while" condition block
 
-    condition: r_exp
+condition: r_exp
 
-    block: "{" statement* "}"
-         | statement
+block: "{" statement* "}"
+        | statement
 
-    assignment: l_exp ":" type "=" r_exp -> assign
-              | l_exp "=" r_exp          -> assign_imp
+assignment: l_exp ":" type "=" r_exp -> assign
+            | l_exp "=" r_exp          -> assign_imp
 
-    ?type: NAME
+?type: NAME
 
-    ?l_exp: NAME
+?l_exp: NAME
 
-    ?r_exp: expr
-          | m_call
+?r_exp: expr
+        | m_call
 
-    m_call: r_exp "." m_name "(" m_args ")" -> m_call
+m_call: r_exp "." m_name "(" m_args ")" -> m_call
 
-    ?m_name: NAME
+?m_name: NAME
 
-    m_args: r_exp ("," r_exp)* (",")?
-          |
+m_args: r_exp ("," r_exp)* (",")?
+        |
 
-    ?expr: or_exp
+?expr: or_exp
 
-    ?or_exp: and_exp
-           | or_exp "or" and_exp -> or_exp
+?or_exp: and_exp
+        | or_exp "or" and_exp -> or_exp
 
-    ?and_exp: equality
-            | and_exp "and" equality -> and_exp
+?and_exp: equality
+        | and_exp "and" equality -> and_exp
 
-    ?equality: comparison
-             | equality "==" comparison -> equals
-             | equality "!=" comparison -> notequals
+?equality: comparison
+            | equality "==" comparison -> equals
+            | equality "!=" comparison -> notequals
 
-    ?comparison: sum
-               | comparison "<"  sum -> less
-               | comparison "<=" sum -> atmost
-               | comparison ">"  sum -> more
-               | comparison ">=" sum -> atleast
+?comparison: sum
+            | comparison "<"  sum -> less
+            | comparison "<=" sum -> atmost
+            | comparison ">"  sum -> more
+            | comparison ">=" sum -> atleast
 
-    ?sum: product
-        | sum "+" product -> plus
-        | sum "-" product -> minus
+?sum: product
+    | sum "+" product -> plus
+    | sum "-" product -> minus
 
-    ?product: atom
-            | product "*" atom -> times
-            | product "/" atom -> divide
+?product: atom
+        | product "*" atom -> times
+        | product "/" atom -> divide
 
-    ?atom: NUMBER      -> lit_number
-         | "-" atom    -> neg
-         | "not" atom    -> negate
-         | l_exp       -> var
-         | "(" expr ")"
-         | boolean
-         | nothing
-         | string      -> lit_string
+?atom: NUMBER      -> lit_number
+        | "-" atom    -> neg
+        | "not" atom    -> negate
+        | l_exp       -> var
+        | "(" expr ")"
+        | boolean
+        | nothing
+        | string      -> lit_string
 
-    ?boolean: "true"  -> lit_true
-            | "false" -> lit_false
-    
-    ?nothing: "none"  -> lit_nothing
-    
-    ?string: ESCAPED_STRING
+?boolean: "true"  -> lit_true
+        | "false" -> lit_false
 
-    %import common.NUMBER
-    %import common.ESCAPED_STRING
-    %import common.CNAME -> NAME
-    %import common.WS_INLINE
-    %import common.WS
+?nothing: "none"  -> lit_nothing
 
-    %ignore WS_INLINE
-    %ignore WS
+?string: ESCAPED_STRING
+
+%import common.NUMBER
+%import common.ESCAPED_STRING
+%import common.CNAME -> NAME
+%import common.WS_INLINE
+%import common.WS
+
+%ignore WS_INLINE
+%ignore WS
 """
 
 #read an input and output file from the command line arguments
