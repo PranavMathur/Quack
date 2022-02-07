@@ -247,7 +247,6 @@ struct class_Int_struct {
     vm_addr m_print;
     vm_addr m_equals;
     /* Added methods */
-    vm_addr m_notequals;
     vm_addr m_less;
     vm_addr m_atmost;
     vm_addr m_more;
