@@ -101,6 +101,7 @@ m_args: r_exp ("," r_exp)* (",")?
 ?product: atom
         | product "*" atom -> times
         | product "/" atom -> divide
+        | product "%" atom -> mod
 
 //an atom can be a literal, a unary operation on an atom,
 //or a parenthesized expression

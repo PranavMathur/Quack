@@ -263,6 +263,7 @@ struct class_Int_struct {
     vm_addr m_mult;
     vm_addr m_sub;
     vm_addr m_div;
+    vm_addr m_mod;
     vm_addr m_neg;
 };
 

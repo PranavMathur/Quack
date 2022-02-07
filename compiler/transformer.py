@@ -5,6 +5,7 @@ ops = (
     'minus',
     'times',
     'divide',
+    'mod',
     'neg',
     'negate',
     'equals',

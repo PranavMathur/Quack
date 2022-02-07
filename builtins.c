@@ -982,6 +982,29 @@ vm_Word method_Int_div[] = {
 };
 
 
+/* Int:mod (new native_method) */
+obj_ref native_Int_mod(void ) {
+    obj_ref this = vm_fp->obj;
+    assert_is_type(this, the_class_Int);
+    obj_Int this_int = (obj_Int) this;
+    obj_ref other = (vm_fp - 1)->obj;
+    assert_is_type(other, the_class_Int);
+    obj_Int other_int = (obj_Int) other;
+    log_debug("Finding remainder of integer values: %d % %d",
+           this_int->value, other_int->value);
+    obj_ref quot = new_int(this_int->value % other_int->value);
+    return quot;
+}
+
+vm_Word method_Int_mod[] = {
+        {.instr = vm_op_enter},
+        {.instr = vm_op_call_native},
+        {.native = native_Int_mod},
+        {.instr = vm_op_return},
+        {.intval = 1}
+};
+
+
 //Negates the integer on the top of the stack
 obj_ref native_Int_neg(void) {
     obj_ref this = vm_fp->obj;
@@ -1022,6 +1045,7 @@ struct  class_struct  the_class_Int_struct = {
                 method_Int_mult,
                 method_Int_sub,
                 method_Int_div,
+                method_Int_mod,
                 method_Int_neg
         }
  };
