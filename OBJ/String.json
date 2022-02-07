@@ -6,6 +6,9 @@
     "print",
     "EQUALS",
     "LESS",
+    "ATMOST",
+    "MORE",
+    "ATLEAST",
     "PLUS"
   ],
   "fields": []

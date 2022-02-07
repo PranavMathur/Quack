@@ -126,6 +126,24 @@
                 ],
                 "ret": "Bool"
             },
+            "ATMOST": {
+                "params": [
+                    "String"
+                ],
+                "ret": "Bool"
+            },
+            "MORE": {
+                "params": [
+                    "String"
+                ],
+                "ret": "Bool"
+            },
+            "ATLEAST": {
+                "params": [
+                    "String"
+                ],
+                "ret": "Bool"
+            },
             "PLUS": {
                 "params": [
                     "String"
