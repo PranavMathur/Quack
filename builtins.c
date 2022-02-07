@@ -155,6 +155,20 @@ vm_Word method_Obj_print[] = {
         {.intval = 0}
 };
 
+/* Obj:println */
+
+vm_Word method_Obj_println[] = {
+        {.instr = vm_op_enter},
+        {.instr = vm_op_load},
+        {.intval = 0},
+        {.instr = vm_op_methodcall},
+        {.intval = 1},  // string method
+        {.instr = vm_op_methodcall},
+        {.intval = 3},  // print method of class string
+        {.instr = vm_op_return},
+        {.intval = 0}
+};
+
 /* For Obj, equality is identity */
 obj_ref native_Obj_equals() {
     obj_ref this = vm_fp->obj;
@@ -193,6 +207,7 @@ struct  class_struct  the_class_Obj_struct = {
                 {method_Obj_constructor, // constructor
                  method_Obj_string, // STRING
                  method_Obj_print, // PRINT
+                 method_Obj_println,
                  method_Obj_equals  // EQUALS
                 }
 };
@@ -282,6 +297,26 @@ vm_Word method_String_print[] = {
         {.instr = vm_op_enter},
         {.instr = vm_op_call_native},
         {.native = native_String_print },
+        {.instr = vm_op_return},
+        {.intval = 0 }
+};
+
+/* String:PRINTLN */
+obj_ref native_String_println() {
+    obj_ref this = vm_fp->obj;
+    /* Checked downcast */
+    assert_is_type(this, the_class_String);
+    struct obj_String_struct* this_string = (struct obj_String_struct*)  this;
+    /* Then we can access fields */
+    log_debug( "**** PRINTLN |%s| ****\n", this_string->text);
+    printf("%s\n", this_string->text);
+    return nothing;
+}
+
+vm_Word method_String_println[] = {
+        {.instr = vm_op_enter},
+        {.instr = vm_op_call_native},
+        {.native = native_String_println },
         {.instr = vm_op_return},
         {.intval = 0 }
 };
@@ -467,6 +502,7 @@ struct  class_struct  the_class_String_struct = {
         method_String_constructor,     /* Constructor */
         method_String_string,
         method_String_print,
+        method_String_println,
         method_String_equals,
         method_String_less,
         method_String_atmost,
@@ -564,6 +600,7 @@ struct  class_struct  the_class_Boolean_struct = {
                  method_Boolean_constructor, // constructor
                  method_Boolean_string, // STRING
                  method_Obj_print, // PRINT
+                 method_Obj_println,
                  method_Obj_equals,  // EQUALS
                  method_Boolean_negate
                 }
@@ -648,6 +685,7 @@ struct  class_struct  the_class_Nothing_struct = {
                 {method_Nothing_constructor, // constructor
                  method_Nothing_string, // STRING
                  method_Obj_print, // PRINT
+                 method_Obj_println,
                  method_Obj_equals  // EQUALS
                 }
 };
@@ -974,6 +1012,7 @@ struct  class_struct  the_class_Int_struct = {
                 method_int_constructor,  // constructor
                 method_Int_string, // STRING
                 method_Obj_print, // PRINT
+                method_Obj_println,
                 method_Int_equals,  // EQUALS
                 method_Int_less, // LESS
                 method_Int_atmost,

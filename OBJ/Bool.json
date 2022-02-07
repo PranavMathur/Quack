@@ -4,6 +4,7 @@
   "methods": [ "$constructor",
     "string",
     "print",
+    "println",
     "EQUALS",
     "NEGATE"
   ],

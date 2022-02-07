@@ -14,6 +14,10 @@
                 "params": [],
                 "ret": "Nothing"
             },
+            "println": {
+                "params": [],
+                "ret": "Nothing"
+            },
             "EQUALS": {
                 "params": [
                     "Obj"
@@ -35,6 +39,10 @@
                 "ret": "String"
             },
             "print": {
+                "params": [],
+                "ret": "Nothing"
+            },
+            "println": {
                 "params": [],
                 "ret": "Nothing"
             },
@@ -114,6 +122,10 @@
                 "params": [],
                 "ret": "Nothing"
             },
+            "println": {
+                "params": [],
+                "ret": "Nothing"
+            },
             "EQUALS": {
                 "params": [
                     "Obj"
@@ -168,6 +180,10 @@
                 "params": [],
                 "ret": "Nothing"
             },
+            "println": {
+                "params": [],
+                "ret": "Nothing"
+            },
             "EQUALS": {
                 "params": [
                     "Obj"
@@ -189,6 +205,10 @@
                 "ret": "String"
             },
             "print": {
+                "params": [],
+                "ret": "Nothing"
+            },
+            "println": {
                 "params": [],
                 "ret": "Nothing"
             },

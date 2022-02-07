@@ -95,6 +95,7 @@ struct class_Obj_struct {
     vm_addr m_constructor;
     vm_addr m_string;
     vm_addr m_print;
+    vm_addr m_println;
     vm_addr m_equals;
 };
 
@@ -124,6 +125,7 @@ struct class_String_struct {
     vm_addr constructor;
     vm_addr m_string;
     vm_addr m_print;
+    vm_addr m_println;
     vm_addr m_equals;
     /* Added method */
     vm_addr m_less;
@@ -166,6 +168,7 @@ struct class_Boolean_struct {
     vm_addr constructor;
     vm_addr m_string;
     vm_addr m_print;
+    vm_addr m_println;
     vm_addr m_equals;
     vm_addr m_negate;
 };
@@ -209,6 +212,7 @@ struct class_Nothing_struct {
     vm_addr constructor;
     vm_addr m_string;
     vm_addr m_print;
+    vm_addr m_println;
     vm_addr m_equals;
 };
 
@@ -248,6 +252,7 @@ struct class_Int_struct {
     vm_addr constructor;
     vm_addr m_string;
     vm_addr m_print;
+    vm_addr m_println;
     vm_addr m_equals;
     /* Added methods */
     vm_addr m_less;
