@@ -197,8 +197,8 @@ class Generator(lark.visitors.Visitor_Recursive):
         #unpack children nodes for convenience
         condition, block = tree.children
         #generate unique labels for block and condition
-        block_label = self.label('block')
-        cond_label = self.label('cond')
+        block_label = self.label('while_block')
+        cond_label = self.label('while_cond')
         #unconditionally jump to condition check
         self.emit('jump %s' % cond_label)
         #emit label for start of block
