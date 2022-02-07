@@ -44,7 +44,31 @@
                 ],
                 "ret": "Bool"
             },
+            "NOTEQUALS": {
+                "params": [
+                    "Int"
+                ],
+                "ret": "Bool"
+            },
             "LESS": {
+                "params": [
+                    "Int"
+                ],
+                "ret": "Bool"
+            },
+            "ATMOST": {
+                "params": [
+                    "Int"
+                ],
+                "ret": "Bool"
+            },
+            "MORE": {
+                "params": [
+                    "Int"
+                ],
+                "ret": "Bool"
+            },
+            "ATLEAST": {
                 "params": [
                     "Int"
                 ],
