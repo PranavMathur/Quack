@@ -21,8 +21,7 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
         elif tree.data == 'assign': #map the variable name to the given type
             left = tree.children[0]
             tree.type = str(tree.children[1])
-            if isinstance(left, lark.Token): #shouldn't be necessary
-                self.variables[str(left)] = tree.type
+            self.variables[str(left)] = tree.type
         elif tree.data == 'assign_imp':
             left = tree.children[0]
             tree.type = tree.children[1].type
