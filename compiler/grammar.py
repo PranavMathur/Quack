@@ -41,6 +41,11 @@ block: "{" statement* "}"
 //an assignment may have an explicit type given, or it may be inferred
 assignment: l_exp ":" type "=" r_exp -> assign
           | l_exp "=" r_exp          -> assign_imp
+          | l_exp "+=" r_exp         -> plus_equals
+          | l_exp "-=" r_exp         -> minus_equals
+          | l_exp "*=" r_exp         -> times_equals
+          | l_exp "/=" r_exp         -> divide_equals
+          | l_exp "%=" r_exp         -> mod_equals
 
 //a type is an identifier
 ?type: NAME
