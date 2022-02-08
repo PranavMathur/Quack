@@ -17,7 +17,7 @@ def cli_parser():
     parser.add_argument('target', nargs='?',
                         type=argparse.FileType('w'), default=sys.stdout)
     parser.add_argument('--name', nargs='?', default='Main')
-    parser.add_argument('--tree', '-t', action='store_true')
+    parser.add_argument('--tree', '-t', action='count', default=0)
     return parser.parse_args()
 
 def main():
@@ -33,13 +33,17 @@ def main():
     #create initial parse tree
     tree = parser.parse(args.source.read())
 
-    if args.tree:
+    if args.tree == 1:
         print(tree.pretty())
         return
 
     #desugar binary operators
     transformer = Transformer()
     tree = transformer.transform(tree)
+
+    if args.tree == 2:
+        print(tree.pretty())
+        return
 
     #decorate tree with types
     type_checker = TypeChecker(types)
