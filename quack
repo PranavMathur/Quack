@@ -5,7 +5,7 @@ if [ "$name" == "" ]; then
     name="Main"
 fi
 
-python3 compile.py "$1" "${name}.asm"
+python3 compile.py "$1" "${name}.asm" --name "$name"
 
 ret=$?
 if [ $ret -eq 0 ]; then
