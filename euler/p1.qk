@@ -1,0 +1,9 @@
+sum = 0;
+current = 0;
+while current < 1000 {
+    if current % 3 == 0 or current % 5 == 0 {
+        sum += current;
+    }
+    current += 1;
+}
+sum.println();
