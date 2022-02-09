@@ -10,6 +10,8 @@ from compiler.generator import Generator, generate_code
 from compiler.transformer import Transformer
 from compiler.typechecker import TypeChecker
 
+types_file = 'builtin_methods.json'
+
 #read an input and output file from the command line arguments
 def cli_parser():
     parser = argparse.ArgumentParser(prog='translate')
@@ -23,7 +25,7 @@ def cli_parser():
 def main():
     args = cli_parser()
     #read type table from file
-    with open('builtin_methods.json', 'r') as f:
+    with open(types_file, 'r') as f:
         types = json.load(f)
     parser = lark.Lark(
         quack_grammar,
