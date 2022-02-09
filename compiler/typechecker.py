@@ -81,3 +81,33 @@ def is_compatible(typ, sup, types):
         if typ == sup: #return true if match is found
             return True
     return False #no match was found
+
+#find the depth of a node in the given inheritance hierarchy
+#Obj has depth 0, direct subclasses of Obj have depth 1, etc.
+def depth(typ, types):
+    ret = 0 #counter
+    #while typ is not Obj, increment the counter and elevate typ by one level
+    while types[typ]['super'] != typ:
+        ret += 1
+        typ = types[typ]['super']
+    return ret
+
+#find the first class that is a superclass of the two arguments
+def common_ancestor(typ1, typ2, types):
+    if typ1 == typ2: #most common check - return typ1 if args are equal
+        return typ1
+    #find difference in depth of the nodes
+    delta = depth(typ1, types) - depth(typ2, types)
+    #if typ1 is deeper than typ2, elevate typ1 by the difference
+    #this is a no-op if depth is negative
+    for i in range(delta):
+        typ1 = types[typ1]['super']
+    #if typ2 is deeper than typ1, elevate typ2 by the difference
+    #this is a no-op if depth is positive
+    for i in range(-delta):
+        typ2 = types[typ2]['super']
+    #elevate both types concurrently until they point to the same class
+    while typ1 != typ2:
+        typ1 = types[typ1]['super']
+        typ2 = types[typ2]['super']
+    return typ1 #both point to the same value, so return one of them
