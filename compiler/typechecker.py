@@ -20,8 +20,13 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             tree.type = self.variables[name]
         elif tree.data == 'assign': #map the variable name to the given type
             left = tree.children[0]
-            tree.type = str(tree.children[1])
-            self.variables[str(left)] = tree.type
+            given_type = str(tree.children[1])
+            imp_type = tree.children[2].type #type of RHS of assignment
+            if not is_compatible(imp_type, given_type, self.types):
+                e = '%r is not a subclass of %r' % (imp_type, given_type)
+                raise ValueError(e)
+            tree.type = str(given_type)
+            self.variables[str(left)] = given_type
         elif tree.data == 'assign_imp':
             left = tree.children[0]
             tree.type = tree.children[1].type
