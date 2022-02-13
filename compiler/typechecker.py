@@ -5,7 +5,21 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
     def __init__(self, types):
         self.variables = {} #set to store types of initialized variables
         self.types = types #method tables - used to find return values
+    #visit children of tree and root
+    #return true if any of the childrens' types were changed
+    #or if the root's type was changed
+    def visit(self, tree):
+        changed = False #changed is initially false
+        for child in tree.children:
+            if isinstance(child, lark.Tree):
+                #if child's type was changed, return true
+                ret = self.visit(child)
+                changed = changed or ret
+        #if root's type was changed, return true
+        ret = self._call_userfunc(tree)
+        return changed or ret
     def __default__(self, tree):
+        orig = tree.type #keep track of original type of tree
         literals = { #map between node names and builtin type names
             'lit_number': 'Int',
             'lit_string': 'String',
@@ -74,6 +88,8 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
                         e = (m_name, exp, rec)
                         raise ValueError('%r expected %r, received %r' % e)
             tree.type = ret_type #set overall type of m_call node
+        #return whether tree's type has changed
+        return tree.type != orig
 
 #check if the first argument is a subclass of the second argument
 def is_compatible(typ, sup, types):
