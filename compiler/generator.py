@@ -133,14 +133,13 @@ class Generator(lark.visitors.Visitor_Recursive):
         if_cond, if_block, elifs, _else = tree.children
 
         join_label = self.label('join') #generate join label - emitted at end
-        #holds information about blocks after if-statement
-        #used for generating labels
-        meta = []
+        #holds all labels used in this block
+        #must be pregenerated so that future labels can be accessed
+        labels = []
         for child in elifs.children:
-            meta.append('elif') #add "elif" to meta for each elif block
+            labels.append(self.label('elif')) #add "elif" for each elif block
         if _else.children:
-            meta.append('else') #if else block exists, add "else" to meta
-        labels = [self.label(i) for i in meta]
+            labels.append(self.label('else')) #if else block exists, add "else"
 
         #unconditionally evaluate the if statement's condition
         self.visit(if_cond)
