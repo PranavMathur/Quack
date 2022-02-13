@@ -115,6 +115,11 @@ def depth(typ, types):
 
 #find the first class that is a superclass of the two arguments
 def common_ancestor(typ1, typ2, types):
+    #if either of the arguments are empty, return the other argument
+    if not typ1:
+        return typ2
+    if not typ2:
+        return typ1
     if typ1 == typ2: #most common check - return typ1 if args are equal
         return typ1
     #find difference in depth of the nodes
