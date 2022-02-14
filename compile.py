@@ -9,6 +9,7 @@ from compiler.grammar import quack_grammar
 from compiler.generator import Generator, generate_code
 from compiler.transformer import Transformer
 from compiler.typechecker import TypeChecker
+from compiler.varchecker import VarChecker
 
 types_file = 'builtin_methods.json'
 
@@ -46,6 +47,11 @@ def main():
     if args.tree == 2:
         print(tree.pretty())
         return
+
+    #check that all variables are defined before use
+    #variables must be defined in all possible execution paths before use
+    var_checker = VarChecker()
+    var_checker.visit(tree)
 
     #decorate tree with types
     type_checker = TypeChecker(types)
