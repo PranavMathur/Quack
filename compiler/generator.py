@@ -80,6 +80,10 @@ class Generator(lark.visitors.Visitor_Recursive):
         left_type = tree.children[0].type
         #emit a method call of the correct type
         self.emit('call %s:%s' % (left_type, tree.children[1]))
+    def raw_rexp(self, tree):
+        #if a statement is just a right_expression, the value of the expression
+        #stays on the stack but is not used, so it can be popped
+        self.emit('pop')
     def and_exp(self, tree):
         left, right = tree.children
         #generate assembly for first expression, which will always run

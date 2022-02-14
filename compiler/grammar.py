@@ -7,7 +7,7 @@ quack_grammar = """
 
 //a statement can be a right expression, an assignment,
 //an if statement, or a while loop
-?statement: r_exp ";"
+?statement: r_exp ";" -> raw_rexp
           | assignment ";"
           | if_stmt
           | while_lp
