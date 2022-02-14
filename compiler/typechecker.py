@@ -33,18 +33,34 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             name = str(tree.children[0])
             tree.type = self.variables[name]
         elif tree.data == 'assign': #map the variable name to the given type
-            left = tree.children[0]
+            #get the name of the variable we are assigning
+            name = str(tree.children[0])
+            #get the given type of the right side of the assignment
             given_type = str(tree.children[1])
-            imp_type = tree.children[2].type #type of RHS of assignment
+            #get the implied type of the right side of the assignment
+            imp_type = tree.children[2].type
             if not is_compatible(imp_type, given_type, self.types):
                 e = '%r is not a subclass of %r' % (imp_type, given_type)
                 raise ValueError(e)
-            tree.type = str(given_type)
-            self.variables[str(left)] = given_type
+            #get the current type of the variable if it exists, blank otherwise
+            old_type = self.variables.get(name, '')
+            #get the common ancestor of the given type and the old type
+            new_type = common_ancestor(old_type, given_type, self.types)
+            #set the type of the assignment and the variable to the new type
+            tree.type = new_type
+            self.variables[name] = new_type
         elif tree.data == 'assign_imp':
-            left = tree.children[0]
-            tree.type = tree.children[1].type
-            self.variables[str(left)] = tree.type
+            #get the name of the variable we are assigning
+            name = str(tree.children[0])
+            #get the implied type of the right side of the assignment
+            imp_type = tree.children[1].type
+            #get the current type of the variable if it exists, blank otherwise
+            old_type = self.variables.get(name, '')
+            #get the common ancestor of the implied type and the old type
+            new_type = common_ancestor(old_type, imp_type, self.types)
+            #set the type of the assignment and the variable to the new type
+            tree.type = new_type
+            self.variables[name] = new_type
         elif tree.data in ('and_exp', 'or_exp'):
             left, right = tree.children
             #check that both operands are Bools
