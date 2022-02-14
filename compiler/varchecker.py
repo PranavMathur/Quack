@@ -1,4 +1,5 @@
 import lark
+from compiler.errors import CompileError
 
 #checks that variables are always defined before use
 class VarChecker(lark.visitors.Visitor_Recursive):
@@ -88,7 +89,7 @@ class VarChecker(lark.visitors.Visitor_Recursive):
             if name not in self.variables:
                 #fail if variable is not found
                 e = 'Variable %r is not defined' % name
-                raise ValueError(e)
+                raise CompileError(e)
         elif tree.data in ('assign', 'assign_imp'):
             #add variable name to variables set
             name = str(tree.children[0])
