@@ -49,7 +49,11 @@ def main():
 
     #decorate tree with types
     type_checker = TypeChecker(types)
-    type_checker.visit(tree)
+    #keep track of whether any types were changed
+    changed = True
+    #decorate the tree until no node's types are changed
+    while changed:
+        changed = type_checker.visit(tree)
 
     #fill code array with assembly instructions
     code = []
