@@ -77,9 +77,10 @@ assignment: l_exp ":" type "=" r_exp -> assign
 //a right expression is an expression or a method call
 ?r_exp: expr
       | m_call
+      | c_call
 
 //a method call is a right expression, a method name, and zero or more arguments
-m_call: r_exp "." m_name "(" m_args ")" -> m_call
+m_call: r_exp "." m_name "(" args ")" -> m_call
 
 //a method name is an identifier
 ?m_name: NAME
@@ -87,8 +88,12 @@ m_call: r_exp "." m_name "(" m_args ")" -> m_call
 //a method argument is a right expression
 //zero or more arguments may be given
 //a trailing comma is allowed
-m_args: r_exp ("," r_exp)* (",")?
-      |
+args: r_exp ("," r_exp)* (",")?
+    |
+
+c_call: NAME "(" args ")"
+
+c_args: (r_exp ("," r_exp)*)?
 
 //an expression can be a combination of the following
 //combination of nonterminals
