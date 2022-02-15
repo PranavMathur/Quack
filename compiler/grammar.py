@@ -11,7 +11,7 @@ class: class_sig class_body
 
 class_sig: "class" NAME "(" formal_args ")" ["extends" NAME]
 
-formal_args: [ NAME ":" NAME ("," NAME ":" NAME)* ]
+formal_args: (NAME ":" NAME ("," NAME ":" NAME)*)?
 
 class_body: "{" statement* method* "}"
 
@@ -23,8 +23,9 @@ statements: statement*
 
 //a statement can be a right expression, an assignment,
 //an if statement, or a while loop
-?statement: r_exp ";" -> raw_rexp
+?statement: r_exp ";"          -> raw_rexp
           | assignment ";"
+          | "return" r_exp ";" -> ret_exp
           | if_stmt
           | while_lp
 
