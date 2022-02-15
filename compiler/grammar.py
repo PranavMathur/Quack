@@ -3,7 +3,23 @@ quack_grammar = """
 ?start: program
 
 //a program can have zero or more statements
-?program: statement*
+?program: classes statements
+
+classes: class*
+
+class: class_sig class_body
+
+class_sig: "class" NAME "(" formal_args ")" ["extends" NAME]
+
+formal_args: [ NAME ":" NAME ("," NAME ":" NAME)* ]
+
+class_body: "{" statement* method* "}"
+
+method: "def" NAME "(" formal_args ")" [":" NAME] statement_block
+
+statement_block: "{" statement* "}"
+
+statements: statement*
 
 //a statement can be a right expression, an assignment,
 //an if statement, or a while loop
@@ -33,7 +49,7 @@ while_lp: "while" condition block
 //the type checker will ensure that this evaluates to a boolean
 condition: r_exp
 
-//a block may be a collegtion of statements within braces
+//a block may be a collection of statements within braces
 //or a single statement
 block: "{" statement* "}"
      | statement
