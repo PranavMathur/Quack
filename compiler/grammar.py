@@ -132,9 +132,13 @@ m_args: r_exp ("," r_exp)* (",")?
 %import common.NUMBER
 %import common.ESCAPED_STRING
 %import common.CNAME -> NAME
+%import common.C_COMMENT
+%import common.CPP_COMMENT
 %import common.WS_INLINE
 %import common.WS
 
+%ignore C_COMMENT
+%ignore CPP_COMMENT
 %ignore WS_INLINE
 %ignore WS
 """
