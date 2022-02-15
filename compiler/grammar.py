@@ -80,10 +80,7 @@ assignment: l_exp ":" type "=" r_exp -> assign
       | c_call
 
 //a method call is a right expression, a method name, and zero or more arguments
-m_call: r_exp "." m_name "(" args ")" -> m_call
-
-//a method name is an identifier
-?m_name: NAME
+m_call: r_exp "." NAME "(" args ")" -> m_call
 
 //a method argument is a right expression
 //zero or more arguments may be given
