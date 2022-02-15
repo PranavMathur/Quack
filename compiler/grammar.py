@@ -13,7 +13,11 @@ class_sig: "class" NAME "(" formal_args ")" ["extends" NAME]
 
 formal_args: (NAME ":" NAME ("," NAME ":" NAME)*)?
 
-class_body: "{" statement* method* "}"
+class_body: "{" constructor methods "}"
+
+constructor: statement*
+
+methods: method*
 
 method: "def" NAME "(" formal_args ")" [":" NAME] statement_block
 
