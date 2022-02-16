@@ -29,7 +29,7 @@ statements: statement*
 //an if statement, or a while loop
 ?statement: r_exp ";"          -> raw_rexp
           | assignment ";"
-          | "return" r_exp ";" -> ret_exp
+          | "return" [r_exp] ";" -> ret_exp
           | if_stmt
           | while_lp
 
