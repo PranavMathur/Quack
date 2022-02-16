@@ -79,10 +79,11 @@ class Transformer(lark.Transformer):
         method_node = typed_tree('m_call', method_children)
         assign_children = [
             left, #LHS of assignment
+            None, #let the type checker imply the type
             method_node #RHS of assignment
         ]
         #create the assignment subtree
-        return typed_tree('assign_imp', assign_children)
+        return typed_tree('assign', assign_children)
     def __default__(self, data, children, meta):
         if data in ops: #only desugar certain nodes
             return self.op_transform(data, children, meta)

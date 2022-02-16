@@ -56,15 +56,10 @@ class Generator(lark.visitors.Visitor_Recursive):
     def assign(self, tree):
         #store the top value on the stack into a local variable
         name = tree.children[0]
-        type = tree.children[1]
-        #map the variable name to the type of the value
-        self.variables[name] = type
-        #emit a store instruction
-        self.emit('store %s' % name)
-    def assign_imp(self, tree):
-        #store the top value on the stack into a local variable
-        name = tree.children[0]
-        type = tree.type
+        if tree.children[1] is not None:
+            type = tree.children[1]
+        else:
+            type = tree.type
         #map the variable name to the type of the value
         self.variables[name] = type
         #emit a store instruction

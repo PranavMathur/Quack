@@ -60,8 +60,7 @@ block: "{" statement* "}"
      | statement
 
 //an assignment may have an explicit type given, or it may be inferred
-assignment: a_exp ":" type "=" r_exp -> assign
-          | a_exp "=" r_exp          -> assign_imp
+assignment: a_exp [":" type] "=" r_exp -> assign
           | a_exp "+=" r_exp         -> plus_equals
           | a_exp "-=" r_exp         -> minus_equals
           | a_exp "*=" r_exp         -> times_equals

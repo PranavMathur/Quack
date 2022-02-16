@@ -38,6 +38,10 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             name = str(tree.children[0])
             #get the given type of the right side of the assignment
             given_type = str(tree.children[1])
+            if tree.children[1] is not None:
+                given_type = str(tree.children[1])
+            else:
+                given_type = tree.children[2].type
             #get the implied type of the right side of the assignment
             imp_type = tree.children[2].type
             if not is_compatible(imp_type, given_type, self.types):
@@ -47,18 +51,6 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             old_type = self.variables.get(name, '')
             #get the common ancestor of the given type and the old type
             new_type = common_ancestor(old_type, given_type, self.types)
-            #set the type of the assignment and the variable to the new type
-            tree.type = new_type
-            self.variables[name] = new_type
-        elif tree.data == 'assign_imp':
-            #get the name of the variable we are assigning
-            name = str(tree.children[0])
-            #get the implied type of the right side of the assignment
-            imp_type = tree.children[1].type
-            #get the current type of the variable if it exists, blank otherwise
-            old_type = self.variables.get(name, '')
-            #get the common ancestor of the implied type and the old type
-            new_type = common_ancestor(old_type, imp_type, self.types)
             #set the type of the assignment and the variable to the new type
             tree.type = new_type
             self.variables[name] = new_type
