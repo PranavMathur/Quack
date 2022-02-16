@@ -224,11 +224,8 @@ static int load_json(char buf[]) {
     int constant_renumber_map[30];
     int n_consts = remap_constants(constant_renumber_map, tree, 30);
 
-    /* module class index -> class reference,
-     * with potential side effect of loading more class files.
-     */
-    class_ref class_map[30];
-    int n_classes = map_classes(class_map, tree, 30);
+    // Mapping imported classes was here; moving AFTER we
+    // create and index this class so that it can reference itself
 
     // Create and initialize a class object
     // push_log_level(DEBUG);
@@ -275,6 +272,13 @@ static int load_json(char buf[]) {
     set_loaded(the_class);
     // We want the class in the "loaded classes" table before loading
     // methods, because the methods might have references to the current class.
+
+    /* module class index -> class reference,
+    * with potential side effect of loading more class files.
+    */
+    class_ref class_map[30];
+    int n_classes = map_classes(class_map, tree, 30);
+
 
     cJSON *code_table = cJSON_GetObjectItemCaseSensitive(tree, "code");
     assert(code_table);  // Abort if it wasn't present
@@ -355,10 +359,8 @@ vm_Word *translate_method_code(cJSON *ops, int const_map[], class_ref class_map[
 #define PATHBUFSIZE 4096
 extern int vm_load_class(char *classname) {
     char load_path[PATHBUFSIZE];
-    strlcpy(load_path, PATH_PREFIX, PATHBUFSIZE);
-    strlcat(load_path, "/", PATHBUFSIZE);
-    strlcat(load_path, classname, PATHBUFSIZE);
-    strlcat(load_path, ".json", PATHBUFSIZE);
+    // Use printf for multi-concat
+    snprintf(load_path, PATHBUFSIZE, "%s/%s.json", PATH_PREFIX, classname);
     log_info("Loading %s", load_path);
     return vm_load_from_path(load_path);
 }
