@@ -3,7 +3,7 @@ quack_grammar = """
 ?start: program
 
 //a program can have zero or more statements
-?program: classes statements
+?program: classes main_block
 
 classes: class_*
 
@@ -25,7 +25,7 @@ method: "def" NAME "(" formal_args ")" [":" NAME] statement_block
 
 statement_block: "{" statement* "}"
 
-statements: statement*
+main_block: statement*
 
 //a statement can be a right expression, an assignment,
 //an if statement, or a while loop
