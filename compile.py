@@ -10,12 +10,8 @@ from compiler.errors import CompileError
 from compiler.grammar import quack_grammar
 from compiler.generator import Generator, generate_code
 from compiler.loader import ClassLoader
-from compiler.transformer import (
-    OpTransformer,
-    ClassTransformer,
-    TypeTransformer
-)
-from compiler.typechecker import TypeChecker
+from compiler.transformer import OpTransformer, ClassTransformer
+from compiler.typechecker import TypeChecker, TypeVisitor
 from compiler.varchecker import VarChecker
 
 types_file = 'builtin_methods.json'
@@ -63,8 +59,8 @@ def main():
             print(tree.pretty())
             return
 
-        type_transformer = TypeTransformer()
-        tree = type_transformer.transform(tree)
+        type_visitor = TypeVisitor()
+        tree = type_visitor.visit(tree)
 
         #check that all variables are defined before use
         #variables must be defined in all possible execution paths before use

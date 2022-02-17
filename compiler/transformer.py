@@ -84,10 +84,3 @@ class OpTransformer(lark.Transformer):
 @lark.v_args(tree=True)
 class ClassTransformer(lark.Transformer):
     pass
-
-class TypeTransformer(lark.Transformer):
-    #set the tree's "type" attribute
-    def _transform_tree(self, tree):
-        ret = super()._transform_tree(tree)
-        ret.type = ''
-        return ret
