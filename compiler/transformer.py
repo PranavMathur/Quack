@@ -91,3 +91,13 @@ class OpTransformer(lark.Transformer):
             return self.assign_op(data, children, meta)
         else:
             return typed_tree(data, children, meta)
+
+@lark.v_args(tree=True)
+class ClassTransformer(lark.Transformer):
+    pass
+
+class TypeTransformer(lark.Transformer):
+    def _transform_tree(self, tree):
+        ret = super()._transform_tree(tree)
+        ret.type = ''
+        return ret
