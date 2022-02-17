@@ -5,13 +5,15 @@ quack_grammar = """
 //a program can have zero or more statements
 ?program: classes statements
 
-classes: class*
+classes: class_*
 
-class: class_sig class_body
+class_: class_sig class_body
 
 class_sig: "class" NAME "(" formal_args ")" ["extends" NAME]
 
-formal_args: (NAME ":" NAME ("," NAME ":" NAME)*)?
+formal_args: (formal_arg ("," formal_arg)*)?
+
+formal_arg: NAME ":" NAME
 
 class_body: "{" constructor methods "}"
 
