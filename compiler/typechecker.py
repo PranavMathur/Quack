@@ -97,6 +97,10 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
                         e = (m_name, exp, rec)
                         raise CompileError('%r expected %r, received %r' % e)
             tree.type = ret_type #set overall type of m_call node
+        elif tree.data == 'c_call':
+            tree.type = str(tree.children[0])
+        elif tree.data == 'ret_exp':
+            tree.type = tree.children[0].type
         #return whether tree's type has changed
         return tree.type != orig
 

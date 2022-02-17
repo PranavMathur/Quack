@@ -51,7 +51,6 @@ def main():
 
         loader = ClassLoader(types)
         loader.visit(tree)
-        print(json.dumps(types, indent=4))
 
         if args.tree == 2:
             print(tree.pretty())
