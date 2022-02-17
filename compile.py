@@ -10,7 +10,7 @@ from compiler.errors import CompileError
 from compiler.grammar import quack_grammar
 from compiler.generator import Generator, generate_code
 from compiler.loader import ClassLoader
-from compiler.transformer import Transformer
+from compiler.transformer import OpTransformer
 from compiler.typechecker import TypeChecker
 from compiler.varchecker import VarChecker
 
@@ -46,8 +46,8 @@ def main():
             return
 
         #desugar binary operators
-        transformer = Transformer()
-        tree = transformer.transform(tree)
+        op_transformer = OpTransformer()
+        tree = op_transformer.transform(tree)
 
         loader = ClassLoader(types)
         loader.visit(tree)

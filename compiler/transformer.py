@@ -33,7 +33,7 @@ def typed_tree(*args):
 #operates on the tree as it is created
 #desugars binary operators into method calls
 @lark.v_args(tree=True)
-class Transformer(lark.Transformer):
+class OpTransformer(lark.Transformer):
     #transform the tree, then set its "type" attribute
     def _transform_tree(self, tree):
         ret = super()._transform_tree(tree)
