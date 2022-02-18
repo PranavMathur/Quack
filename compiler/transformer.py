@@ -81,7 +81,27 @@ class OpTransformer(lark.Transformer):
         else:
             return Tree(data, children, meta)
 
-#creates class constructors and Main class
+#creates Main class
 @lark.v_args(tree=True)
 class ClassTransformer(lark.Transformer):
-    pass
+    def __init__(self, types):
+        self.types = types
+    def main_block(self, tree):
+        return Tree('class_', [
+            Tree('class_sig', [
+                'Main',
+                Tree('formal_args', []),
+                'Obj'
+            ]),
+            Tree('class_body', [
+                Tree('constructor', []),
+                Tree('methods', [
+                    Tree('method', [
+                        '$constructor',
+                        Tree('formal_args', []),
+                        'Nothing',
+                        Tree('statement_block', tree.children)
+                    ])
+                ])
+            ])
+        ])
