@@ -55,7 +55,7 @@ def main():
 
         #create constructor in user-defined classes
         #and create main class for execution
-        class_transformer = ClassTransformer()
+        class_transformer = ClassTransformer(types)
         tree = class_transformer.transform(tree)
 
         if args.tree == 2:

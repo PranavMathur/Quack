@@ -1,4 +1,5 @@
 import lark
+from lark import Tree
 from copy import deepcopy
 from compiler.errors import CompileError
 
@@ -28,13 +29,21 @@ class ClassLoader(lark.visitors.Visitor_Recursive):
             'methods': super_methods,
             'fields': super_fields
         }
-        #update the parameter information for the constructor
-        self.types[c_name]['methods']['$constructor'] = {
-            'params': arg_types,
-            'ret': 'Nothing'
-        }
         #unpack children for convenience
         constructor, methods = class_body.children
+        #create subtree for the constructor method
+        con_method = Tree('method', [
+            '$constructor',
+            None,
+            'Nothing',
+            Tree('statement_block', constructor.children)
+        ])
+        #manually set argument/return types for the constructor
+        con_method.m_name = '$constructor'
+        con_method.arg_types = arg_types
+        con_method.ret_type = 'Nothing'
+        #add constructor method to class's methods
+        methods.children.append(con_method)
         #iterate over user-defined methods
         for method in methods.children:
             #add (or update) user-defined method to method table
