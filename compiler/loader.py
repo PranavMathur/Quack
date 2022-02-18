@@ -51,6 +51,9 @@ class ClassLoader(lark.visitors.Visitor_Recursive):
                 'params': method.arg_types,
                 'ret': method.ret_type
             }
+        #remove constructor child of class, as the constructor was added
+        #to the methods block
+        class_body.children.pop(0)
     #infer the type of a user-defined method
     def method(self, tree):
         #extract method name from AST
