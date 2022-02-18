@@ -49,9 +49,12 @@ def main():
         op_transformer = OpTransformer()
         tree = op_transformer.transform(tree)
 
+        #load user-defined classes and methods into method table
         loader = ClassLoader(types)
         loader.visit(tree)
 
+        #create constructor in user-defined classes
+        #and create main class for execution
         class_transformer = ClassTransformer()
         tree = class_transformer.transform(tree)
 
@@ -59,6 +62,7 @@ def main():
             print(tree.pretty())
             return
 
+        #initialize "type" attribute for all nodes in the tree
         type_visitor = TypeVisitor()
         tree = type_visitor.visit(tree)
 

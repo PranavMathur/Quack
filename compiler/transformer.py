@@ -81,6 +81,7 @@ class OpTransformer(lark.Transformer):
         else:
             return Tree(data, children, meta)
 
+#creates class constructors and Main class
 @lark.v_args(tree=True)
 class ClassTransformer(lark.Transformer):
     pass
