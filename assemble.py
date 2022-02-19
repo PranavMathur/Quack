@@ -352,8 +352,8 @@ class ObjectCode:
                 # PC will be patch loc + 1
                 jump_span = label_loc - (patch_loc + 1)
                 self.code[patch_loc] = jump_span
-                log.debug(f"Jump from loc {patch_loc} to {patch_label} "
-                          f"({label_loc}) is {jump_span} words")
+                #log.debug(f"Jump from loc {patch_loc} to {patch_label} "
+                #          f"({label_loc}) is {jump_span} words")
             except IndexError:
                 log.error(f"Unresolved label '{patch_label}'")
 

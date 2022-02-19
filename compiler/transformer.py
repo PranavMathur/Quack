@@ -119,12 +119,11 @@ class ClassTransformer(lark.Transformer):
     #move the main class created above into the correct subtree
     def program(self, tree):
         classes = tree.children[0]
-        main_class = tree.children[1]
+        #remove main class subtree from tree
+        main_class = tree.children.pop(1)
         #do nothing if no main class was created
         if not main_class.children:
             return tree
         #add main class to children of classes block
         classes.children.append(main_class)
-        #remove main class subtree from tree
-        tree.children.pop(1)
         return tree
