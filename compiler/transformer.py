@@ -58,21 +58,16 @@ class OpTransformer(lark.Transformer):
     def assign_op(self, data, children, meta):
         method = data[:-7].upper() #extract the appropriate binary operator
         left, right = children #unpack the arguments to the operator
-        var_node = Tree('var', [left]) #create the variable node for the LHS
-        method_children = [
-            var_node, #receiver object
-            method, #name of binary op's associated method
-            Tree('args', [right]) #argument subtree
-        ]
-        #create the method call subtree
-        method_node = Tree('m_call', method_children)
-        assign_children = [
+        #create the assignment subtree
+        return Tree('assign', [
             left, #LHS of assignment
             None, #let the type checker imply the type
-            method_node #RHS of assignment
-        ]
-        #create the assignment subtree
-        return Tree('assign', assign_children)
+            Tree('m_call', [ #RHS of assignment
+                Tree('var', [left]), #receiver object
+                method, #name of binary op's associated method
+                Tree('args', [right]) #argument subtree
+            ])
+        ])
     def __default__(self, data, children, meta):
         if data in ops: #only desugar certain nodes
             return self.op_transform(data, children, meta)
