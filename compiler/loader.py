@@ -34,7 +34,7 @@ class ClassLoader(lark.visitors.Visitor_Recursive):
         #create subtree for the constructor method
         con_method = Tree('method', [
             '$constructor',
-            Tree('formal_args', []),
+            formal_args,
             'Nothing',
             Tree('statement_block', constructor.children)
         ])
