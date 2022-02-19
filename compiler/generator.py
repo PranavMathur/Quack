@@ -64,8 +64,10 @@ class Generator(lark.visitors.Visitor_Recursive):
         }
         self.current_class['methods'].append(obj)
         self.current_method = obj
+        self.emit('enter')
         for child in tree.children[3].children:
             self.visit(child)
+        self.emit('return %s' % len(obj['args']))
     def lit_number(self, tree):
         #push an integer onto the stack
         self.emit('const %s' % tree.children[0])
