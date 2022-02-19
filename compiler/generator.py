@@ -16,7 +16,7 @@ class Generator(lark.visitors.Visitor_Recursive):
     def __init__(self, classes, types):
         #store the code array and types table
         super().__init__()
-        self._classes = classes
+        self.classes_ = classes
         self.current_class = None
         self.current_method = None
         self.types = types
@@ -51,14 +51,15 @@ class Generator(lark.visitors.Visitor_Recursive):
             'fields': {}
         }
         self.current_class = obj
-        self._classes.append(obj)
+        self.classes_.append(obj)
         for method in tree.children[1].children[0].children:
             self.visit(method)
     def method(self, tree):
         name = str(tree.children[0])
+        args = tree.children[1]
         obj = {
             'name': name,
-            'args': [],
+            'args': [str(arg.children[0]) for arg in args.children],
             'code': []
         }
         self.current_class['methods'].append(obj)
