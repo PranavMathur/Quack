@@ -43,7 +43,8 @@ class ClassLoader(lark.visitors.Visitor_Recursive):
         con_method.arg_types = arg_types
         con_method.ret_type = 'Nothing'
         #add constructor method to class's methods
-        methods.children.append(con_method)
+        if con_method.children[3].children:
+            methods.children.insert(0, con_method)
         #iterate over user-defined methods
         for method in methods.children:
             #add (or update) user-defined method to method table
