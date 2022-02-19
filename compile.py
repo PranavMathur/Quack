@@ -54,7 +54,7 @@ def main():
         loader.visit(tree)
 
         #creates main class for execution
-        class_transformer = ClassTransformer()
+        class_transformer = ClassTransformer(args.name)
         tree = class_transformer.transform(tree)
 
         if args.tree == 2:

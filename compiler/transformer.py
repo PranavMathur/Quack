@@ -84,6 +84,8 @@ class OpTransformer(lark.Transformer):
 #creates Main class from code at the end of the file
 @lark.v_args(tree=True)
 class ClassTransformer(lark.Transformer):
+    def __init__(self, name):
+        self.name = name
     #process code at the end of the file
     def main_block(self, tree):
         #do nothing if there is no code to be executed
@@ -94,7 +96,7 @@ class ClassTransformer(lark.Transformer):
         return Tree('class_', [
             #class signature contains class name, arguments, and superclass
             Tree('class_sig', [
-                'Main',
+                self.name,
                 Tree('formal_args', []),
                 'Obj'
             ]),
