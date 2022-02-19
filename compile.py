@@ -78,13 +78,13 @@ def main():
         while changed:
             changed = type_checker.visit(tree)
 
-        #fill code array with assembly instructions
-        code = []
-        generator = Generator(code, types)
+        classes = []
+        generator = Generator(classes, types)
         generator.visit(tree)
+        print(classes)
 
         #output code to file or stdout
-        generate_code(args.name, generator.variables, code, args.target)
+        #generate_code(args.name, generator.variables, code, args.target)
     except CompileError as e:
         print('Error: ' + str(e), file=sys.stderr)
         if args.verbose:

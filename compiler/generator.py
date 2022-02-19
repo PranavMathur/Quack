@@ -2,12 +2,23 @@ import lark
 import itertools
 from collections import defaultdict as dd
 
+preorder = (
+    'class_',
+    'method',
+    'and_exp',
+    'or_exp',
+    'if_stmt',
+    'while_lp'
+)
+
 #generate assembly code from the parse tree
 class Generator(lark.visitors.Visitor_Recursive):
-    def __init__(self, code, types):
+    def __init__(self, classes, types):
         #store the code array and types table
         super().__init__()
-        self.code = code
+        self._classes = classes
+        self.current_class = None
+        self.current_method = None
         self.types = types
         self.variables = {} #stores names and types of local variables
         self.labels = dd(itertools.count) #stores count of label prefixes
@@ -15,26 +26,45 @@ class Generator(lark.visitors.Visitor_Recursive):
         #emits a line of code to the output array
         #adds a tab to the beginning by default
         if tab:
-            self.code.append('\t' + line)
-        else:
-            self.code.append(line)
+            line = '\t' + line
+        self.current_method['code'].append(line)
     def label(self, prefix):
         #generates a unique label name with the given prefix
         num = next(self.labels[prefix]) #get current number for given prefix
         return f'{prefix}_{num}'
     def visit(self, tree):
-        #"and/or" expressions are handled differently
-        if tree.data == 'and_exp':
-            self.and_exp(tree)
-        elif tree.data == 'or_exp':
-            self.or_exp(tree)
-        elif tree.data == 'if_stmt':
-            self.if_stmt(tree)
-        elif tree.data == 'while_lp':
-            self.while_lp(tree)
+        #some nodes need to be visited before their children
+        #if this node is such a node, visit it directly
+        #the node's method may visit its children
+        if tree.data in preorder:
+            getattr(self, tree.data)(tree)
         else:
             #most expressions are traversed postorder
             return super().visit(tree)
+    def class_(self, tree):
+        name = str(tree.children[0].children[0])
+        sup = str(tree.children[0].children[2] or 'Obj')
+        obj = {
+            'name': name,
+            'super': sup,
+            'methods': [],
+            'fields': {}
+        }
+        self.current_class = obj
+        self._classes.append(obj)
+        for method in tree.children[1].children[0].children:
+            self.visit(method)
+    def method(self, tree):
+        name = str(tree.children[0])
+        obj = {
+            'name': name,
+            'args': [],
+            'code': []
+        }
+        self.current_class['methods'].append(obj)
+        self.current_method = obj
+        for child in tree.children[3].children:
+            self.visit(child)
     def lit_number(self, tree):
         #push an integer onto the stack
         self.emit('const %s' % tree.children[0])
