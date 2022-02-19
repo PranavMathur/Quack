@@ -16,11 +16,13 @@ class Generator(lark.visitors.Visitor_Recursive):
     def __init__(self, classes, types):
         #store the code array and types table
         super().__init__()
+        #array of class objects, initially empty
         self.classes_ = classes
+        #class object of the current class subtree
         self.current_class = None
+        #method object of the current method subtree
         self.current_method = None
-        self.types = types
-        self.variables = {} #stores names and types of local variables
+        #label prefix counter
         self.labels = dd(itertools.count) #stores count of label prefixes
     def emit(self, line, tab=True):
         #emits a line of code to the output array
@@ -42,8 +44,11 @@ class Generator(lark.visitors.Visitor_Recursive):
             #most expressions are traversed postorder
             return super().visit(tree)
     def class_(self, tree):
+        #extract class's name and supertype
         name = str(tree.children[0].children[0])
+        #if no supertype is given, default to 'Obj'
         sup = str(tree.children[0].children[2] or 'Obj')
+        #create class object
         obj = {
             'name': name,
             'super': sup,
@@ -51,22 +56,34 @@ class Generator(lark.visitors.Visitor_Recursive):
             'fields': {}
         }
         self.current_class = obj
+        #store class object in result array
         self.classes_.append(obj)
+        #generate code for all methods in the class
         for method in tree.children[1].children[0].children:
             self.visit(method)
     def method(self, tree):
+        #extract class's name and formal arguments
         name = str(tree.children[0])
         args = tree.children[1]
+        #create method object
         obj = {
             'name': name,
             'args': [str(arg.children[0]) for arg in args.children],
-            'code': []
+            'locals': {}, #stores names and types of local variables
+            'code': [] #stores assembly code for the method
         }
+        #add method object to the current class
         self.current_class['methods'].append(obj)
+        #store the current method for use in other generator functions
         self.current_method = obj
+        #all methods start with an enter command
         self.emit('enter')
+        #iterate over statements in the method's statement block
         for child in tree.children[3].children:
             self.visit(child)
+        #push nothing as return value - TODO: change this
+        self.emit('const nothing')
+        #return from the method, popping off arguments
         self.emit('return %s' % len(obj['args']))
     def lit_number(self, tree):
         #push an integer onto the stack
@@ -94,7 +111,7 @@ class Generator(lark.visitors.Visitor_Recursive):
         else:
             type = tree.type
         #map the variable name to the type of the value
-        self.variables[name] = type
+        self.current_method['locals'][name] = type
         #emit a store instruction
         self.emit('store %s' % name)
     def m_call(self, tree):
@@ -243,43 +260,41 @@ class Generator(lark.visitors.Visitor_Recursive):
         #if condition evaluates to true, jump to beginning of block
         self.emit('jump_if %s' % block_label)
 
-#outputs assembly code to given stream
-def generate_code(name, variables, code, out):
-    emit = lambda s: print(s, file=out) #convenience method
-    #emit header common to all files
-    emit('.class %s:Obj\n\n.method $constructor' % name)
-    if variables:
-        #emit list of local variables separated by commas
-        emit('.local %s' % ','.join(i for i in variables))
-    emit('\tenter')
-    #emit each line, indented by one tab
-    for line in code:
-        emit(line)
-    #push return value of constructor
-    emit('\tconst nothing')
-    #return, popping zero arguments
-    emit('\treturn 0')
-
 #generates assembly file for the given class object
 def generate_file(class_):
+    #extract data from class object
     name = class_['name']
     sup = class_['super']
     methods = class_['methods']
     fields = class_['fields']
+    #data will be output to file with the same name as the class
     filename = name + '.asm'
+    #open the output file for writing
     with open(filename, 'w') as f:
+        #output class header with name and supertype
         f.write('.class %s:%s\n' % (name, sup))
+        #if there are any fields, output their names
         for field in fields:
             f.write('.field %s\n' % field)
         f.write('\n')
+        #for each method, output assembly for the method
         for method in methods:
+            #extract data from method object
             m_name = method['name']
             args = method['args']
+            locals = method['locals']
             code = method['code']
+            #output method header
             f.write('.method %s\n' % m_name)
+            #if the method takes arguments, output their names
             if args:
                 s = ','.join(args)
                 f.write('.args %s\n' % s)
+            #if there are any local variables, output their names
+            if locals:
+                s = ','.join(locals)
+                f.write('.local %s\n' % s)
+            #output assembly for each instruction in the method
             for line in code:
                 f.write(line + '\n')
             f.write('\n')
