@@ -8,7 +8,7 @@ import sys
 
 from compiler.errors import CompileError
 from compiler.grammar import quack_grammar
-from compiler.generator import Generator, generate_code
+from compiler.generator import Generator, generate_file
 from compiler.loader import ClassLoader
 from compiler.transformer import OpTransformer, ClassTransformer
 from compiler.typechecker import TypeChecker, TypeVisitor
@@ -81,10 +81,10 @@ def main():
         classes = []
         generator = Generator(classes, types)
         generator.visit(tree)
-        print(classes)
 
-        #output code to file or stdout
-        #generate_code(args.name, generator.variables, code, args.target)
+        #output code to files
+        for class_ in classes:
+            generate_file(class_)
     except CompileError as e:
         print('Error: ' + str(e), file=sys.stderr)
         if args.verbose:

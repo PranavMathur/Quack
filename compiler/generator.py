@@ -256,3 +256,27 @@ def generate_code(name, variables, code, out):
     emit('\tconst nothing')
     #return, popping zero arguments
     emit('\treturn 0')
+
+#generates assembly file for the given class object
+def generate_file(class_):
+    name = class_['name']
+    sup = class_['super']
+    methods = class_['methods']
+    fields = class_['fields']
+    filename = name + '.asm'
+    with open(filename, 'w') as f:
+        f.write('.class %s:%s\n' % (name, sup))
+        for field in fields:
+            f.write('.field %s\n' % field)
+        f.write('\n')
+        for method in methods:
+            m_name = method['name']
+            args = method['args']
+            code = method['code']
+            f.write('.method %s\n' % m_name)
+            if args:
+                s = ','.join(args)
+                f.write('.args %s\n' % s)
+            for line in code:
+                f.write(line + '\n')
+            f.write('\n')
