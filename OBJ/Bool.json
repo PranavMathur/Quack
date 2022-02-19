@@ -8,7 +8,5 @@
     "EQUALS",
     "NEGATE"
   ],
-  "fields": [],
-  "constants": [],
-  "imports": []
+  "fields": []
 }
