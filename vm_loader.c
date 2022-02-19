@@ -104,6 +104,19 @@ class_ref find_loaded(char *name) {
     return 0;
 }
 
+class_ref ensure_loaded(char *class_name) {
+    class_ref clazz = find_loaded(class_name);
+    if (! clazz) {
+        /* We must load it first; recursive call of loader */
+        log_info("Requires loading %s", class_name);
+        vm_load_class(class_name);
+        clazz = find_loaded(class_name);
+    }
+    assert(clazz);
+    return clazz;
+}
+
+
 
 // Capacity limit:  For simplicity we read into a
 // buffer of 20k bytes.
@@ -194,14 +207,7 @@ static int map_classes(class_ref class_map[], cJSON *tree, int capacity) {
     while (el) {
         assert(class_count < capacity);
         char *class_name = el->valuestring;
-        class_ref clazz = find_loaded(class_name);
-        if (! clazz) {
-            /* We must load it first; recursive call of loader */
-            log_info("Requires loading %s", class_name);
-            vm_load_class(class_name);
-            clazz = find_loaded(class_name);
-            assert(clazz);
-        }
+        class_ref clazz = ensure_loaded(class_name);
         class_map[class_count] = clazz;
         ++class_count;
         el = el->next;
@@ -245,7 +251,7 @@ static int load_json(char buf[]) {
             sizeof(struct class_header_struct)
             + n_methods * sizeof(vm_Word);
     size_t obj_size = sizeof(struct obj_header_struct) + n_fields * sizeof(vm_Word);
-    class_ref the_super = find_loaded(super_name);
+    class_ref the_super = ensure_loaded(super_name);
     assert(the_super); // Error if we can't find the superclass
     class_ref the_class = (class_ref) malloc(class_obj_size);
     the_class->header = (struct class_header_struct) {
@@ -335,7 +341,8 @@ vm_Word *translate_method_code(cJSON *ops, int const_map[], class_ref class_map[
                 check_health_object(get_const_value(const_index));
                 vm_code_block[vm_code_index++] = (vm_Word)
                         {.intval=  const_index};
-            } else if(vm_op_bytecodes[opcode].instr == vm_op_new) {
+            } else if(vm_op_bytecodes[opcode].instr == vm_op_new
+                      || vm_op_bytecodes[opcode].instr == vm_op_is_instance) {
                 class_ref clazz = class_map[operand];
                 log_debug("Translating allocation of new '%s'",
                           clazz->header.class_name);
