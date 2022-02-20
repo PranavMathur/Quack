@@ -144,7 +144,7 @@ c_args: (r_exp ("," r_exp)*)?
      | "-" atom     -> neg
      | "not" atom   -> negate
      | l_exp        -> var
-     | "(" expr ")"
+     | "(" r_exp ")"
      | boolean
      | nothing
      | string       -> lit_string
