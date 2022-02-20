@@ -30,30 +30,24 @@ assign_ops = (
 class OpTransformer(lark.Transformer):
     #"!=" is translated into "==" followed by a negation
     def notequals(self, tree):
-        #children of the intermediate call's node
-        eq_children = [
-            tree.children[0], #receiver of "!=" (LHS)
-            'EQUALS',
-            Tree('args', tree.children[1:]) #argument (RHS)
-        ]
-        #intermediate call's node
-        eq_call = Tree('m_call', eq_children)
-        #children of the returned node
-        new_children = [
-            eq_call, #receiver of negation
+        #create and return method call subtree
+        return Tree('m_call', [
+            Tree('m_call', [ #receiver object of NEGATE is a method call
+                tree.children[0], #receiver of EQUALS call
+                'EQUALS',
+                Tree('args', tree.children[1:]) #argument to EQUALS call
+            ]),
             'NEGATE',
-            Tree('args', []) #boolean negation has no arguments
-        ]
-        return Tree('m_call', new_children)
+            Tree('args', []) #NEGATE takes no arguments
+        ])
     #create a method call subtree with the appropriate binary op function
     def op_transform(self, data, children, meta):
         #desugar binary operations into method calls
-        new_children = [
+        return Tree('m_call', [
             children[0], #receiver object
             data.upper(), #name of operator
             Tree('args', children[1:]) #argument object, if provided
-        ]
-        return Tree('m_call', new_children)
+        ])
     #create an assignment subtree that assigns to the result of a method call
     def assign_op(self, data, children, meta):
         method = data[:-7].upper() #extract the appropriate binary operator
