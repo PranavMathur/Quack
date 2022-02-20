@@ -133,16 +133,18 @@ c_args: (r_exp ("," r_exp)*)?
 //multiplication and division are the highest precedence binary operations,
 //but bind less tightly than unary operators, literals,
 //and parenthesized expressions
-?product: atom
-        | product "*" atom -> times
-        | product "/" atom -> divide
-        | product "%" atom -> mod
+?product: unary
+        | product "*" unary -> times
+        | product "/" unary -> divide
+        | product "%" unary -> mod
+
+?unary: atom
+      | "-" unary   -> neg
+      | "not" unary -> negate
 
 //an atom can be a literal, a unary operation on an atom,
 //or a parenthesized expression
 ?atom: NUMBER       -> lit_number
-     | "-" atom     -> neg
-     | "not" atom   -> negate
      | l_exp        -> var
      | "(" r_exp ")"
      | boolean
