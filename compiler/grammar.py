@@ -61,16 +61,18 @@ condition: r_exp
 block: "{" statement* "}"
      | statement
 
-//an assignment may have an explicit type given, or it may be inferred
-assignment: a_exp [":" type] "=" r_exp -> assign
-          | a_exp "+=" r_exp         -> plus_equals
-          | a_exp "-=" r_exp         -> minus_equals
-          | a_exp "*=" r_exp         -> times_equals
-          | a_exp "/=" r_exp         -> divide_equals
-          | a_exp "%=" r_exp         -> mod_equals
+assignment: l_exp [":" type] "=" r_exp -> assign
+          | r_exp "." NAME "=" r_exp   -> store_field
+          | op_assign
+
+op_assign: a_exp "+=" r_exp -> plus_equals
+         | a_exp "-=" r_exp -> minus_equals
+         | a_exp "*=" r_exp -> times_equals
+         | a_exp "/=" r_exp -> divide_equals
+         | a_exp "%=" r_exp -> mod_equals
 
 ?a_exp: NAME
-      | r_exp "." NAME -> set_field
+      | r_exp "." NAME
 
 //a type is an identifier
 ?type: NAME
@@ -82,7 +84,7 @@ assignment: a_exp [":" type] "=" r_exp -> assign
 ?r_exp: expr
       | m_call
       | c_call
-      | r_exp "." NAME -> get_field
+      | r_exp "." NAME -> load_field
 
 //a method call is a right expression, a method name, and zero or more arguments
 m_call: r_exp "." NAME "(" args ")" -> m_call

@@ -52,16 +52,35 @@ class OpTransformer(lark.Transformer):
     def assign_op(self, data, children, meta):
         method = data[:-7].upper() #extract the appropriate binary operator
         left, right = children #unpack the arguments to the operator
-        #create the assignment subtree
-        return Tree('assign', [
-            left, #LHS of assignment
-            None, #let the type checker imply the type
-            Tree('m_call', [ #RHS of assignment
-                Tree('var', [left]), #receiver object
-                method, #name of binary op's associated method
-                Tree('args', [right]) #argument subtree
+        #check if the LHS is a field access or just an lvalue
+        if isinstance(children[0], Tree):
+            #handle assignment operators on fields
+            #unpack object and field name for convenience
+            obj, field = children[0].children
+            #create the assignment subtree
+            return Tree('store_field', [
+                obj, #object on which to set a field
+                field, #name of the field to set
+                Tree('m_call', [ #value to set the field to
+                    Tree('load_field', [ #LHS of operation is the current value
+                        obj, #object from which to load a value
+                        field #name of the field to load
+                    ]),
+                    method, #name of binary op's associated method
+                    Tree('args', [right]) #argument subtree
+                ])
             ])
-        ])
+        else:
+            #create the assignment subtree
+            return Tree('assign', [
+                left, #LHS of assignment
+                None, #let the type checker imply the type
+                Tree('m_call', [ #RHS of assignment
+                    Tree('var', [left]), #receiver object
+                    method, #name of binary op's associated method
+                    Tree('args', [right]) #argument subtree
+                ])
+            ])
     def __default__(self, data, children, meta):
         if data in ops: #only desugar certain nodes
             return self.op_transform(data, children, meta)
