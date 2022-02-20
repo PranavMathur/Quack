@@ -9,7 +9,7 @@ import sys
 from compiler.errors import CompileError
 from compiler.grammar import quack_grammar
 from compiler.generator import Generator, generate_file
-from compiler.loader import ClassLoader
+from compiler.loader import ClassLoader, FieldLoader
 from compiler.transformer import OpTransformer, ClassTransformer
 from compiler.typechecker import TypeChecker
 from compiler.varchecker import VarChecker
@@ -52,6 +52,11 @@ def main():
         #load user-defined classes and methods into method table
         loader = ClassLoader(types)
         loader.visit(tree)
+
+        #determine what fields each class has
+        #and ensure that all fields are defined on all paths
+        field_loader = FieldLoader(types)
+        field_loader.visit(tree)
 
         #creates main class for execution
         class_transformer = ClassTransformer(args.name)

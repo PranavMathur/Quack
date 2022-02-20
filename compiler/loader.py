@@ -65,3 +65,134 @@ class ClassLoader(lark.visitors.Visitor_Recursive):
         #extract return type of function
         #if return type is not given, infer that function returns 'none'
         tree.ret_type = str(tree.children[2] or 'Nothing')
+
+#determines what fields are defined in a class's constructor
+#and ensures no fields were only defined on some paths
+class FieldLoader(lark.visitors.Visitor_Recursive):
+    def __init__(self, types):
+        #will be updated after each class is processed
+        self.types = types
+        #stores variables that have definitely been initialized
+        self.initialized = set()
+        #stores variables that may have been initialized
+        self.seen = set()
+    def visit(self, tree):
+        #handle if statements and while loops
+        if tree.data == 'if_stmt':
+            self._if_stmt(tree)
+        elif tree.data == 'while_lp':
+            self._while_lp(tree)
+        else:
+            #handle everything else (stores and loads)
+            for child in tree.children:
+                if isinstance(child, lark.Tree):
+                    self.visit(child)
+            self._call_userfunc(tree)
+        #if the entire class has been processed, check for uninitialized
+        #fields and update the types table
+        if tree.data == 'class_':
+            #compute the fields which were seen but not initialized
+            free_fields = self.seen - self.initialized
+            if free_fields:
+                #if any such fields were found, throw a compile error
+                s = ', '.join(free_fields)
+                word = 'are' if len(free_fields) > 1 else 'is'
+                e = '%r %s not defined on all paths' % (s, word)
+                raise CompileError(e)
+            #find the name of the current class
+            class_ = tree.children[0].children[0]
+            fields = self.types[class_]['fields']
+            #store each new field in the types table
+            for field in self.initialized:
+                if field not in fields:
+                    fields[field] = ''
+            #reset the initialized and seen sets for the next class
+            self.initialized = set()
+            self.seen = set()
+    def _if_stmt(self, tree):
+        #unpack children for convenience
+        if_cond, if_block, elifs, _else = tree.children
+        #check if condition with master fields set
+        self.visit(if_cond)
+        #used to store sets of fields found in each block
+        field_sets = []
+        #store master fields set before checking if block
+        old_init = self.initialized
+        #make a copy of the master fields set for use in the if block
+        self.initialized = old_init.copy()
+        #check the if block for compliance
+        self.visit(if_block)
+        #add state of fields set after if block to list of sets
+        field_sets.append(self.initialized)
+        #reset state of master fields set
+        self.initialized = old_init
+        #check condition and block for every elif
+        for _elif in elifs.children:
+            #unpack children for convenience
+            elif_cond, elif_block = _elif.children
+            #check elif condition with master fields set
+            self.visit(elif_cond)
+            #make a copy of the master fields set for use in the elif block
+            self.initialized = old_init.copy()
+            #check the elif block for compliance
+            self.visit(elif_block)
+            #add state of fields set after elif block to list of sets
+            field_sets.append(self.initialized)
+            #reset state of master fields set
+            self.initialized = old_init
+        #if there is an else block, check it for compliance
+        if _else.children:
+            else_block = _else.children[0]
+            #make a copy of the master fields set for use in the else block
+            self.initialized = old_init.copy()
+            #check the else block for compliance
+            self.visit(else_block)
+            #add state of fields set after else block to list of sets
+            field_sets.append(self.initialized)
+            #reset state of master fields set
+            self.initialized = old_init
+        else:
+            #if there is no else block, pretend it added no new fields
+            field_sets.append(self.initialized)
+        #compute intersectin of all new field sets
+        new_fields = field_sets[0].intersection(*field_sets)
+        #update the master fields set with the new fields
+        self.initialized.update(new_fields)
+    def _while_lp(self, tree):
+        #unpack children for convenience
+        condition, block = tree.children
+        #check while condition for compliance
+        self.visit(condition)
+        #store master fields set before checking while block
+        old_init = self.initialized
+        #make a copy of the master fields set for use in the while block
+        self.initialized = old_init.copy()
+        #check while block for compliance
+        self.visit(block)
+        #reset state of master fields set
+        self.initialized = old_init
+    def __default__(self, tree):
+        if tree.data == 'load_field':
+            obj = tree.children[0]
+            #only process loads from the "this" object
+            if not isinstance(obj, Tree) or not str(obj.children[0]) == 'this':
+                return
+            #get the name of the loaded field
+            field = str(tree.children[1])
+            #check that the field name exists in the initialized set
+            if field not in self.initialized:
+                e = 'Field %r is not defined' % field
+                raise CompileError(e)
+            #keep track of fields we have loaded at any point
+            self.seen.add(field)
+        elif tree.data == 'store_field':
+            obj = tree.children[0]
+            #only process stores to the "this" object
+            if not isinstance(obj, Tree) or not str(obj.children[0]) == 'this':
+                return
+            #get the name of the stored field
+            field = str(tree.children[1])
+            #this field has been initialized on this path
+            self.initialized.add(field)
+            #this field has been initialized on some path
+            self.seen.add(field)
