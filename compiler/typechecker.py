@@ -1,12 +1,6 @@
 import lark
 from compiler.errors import CompileError
 
-#initializes "type" attribute on all nodes
-class TypeVisitor(lark.visitors.Visitor_Recursive):
-    #set the tree's "type" attribute
-    def __default__(self, tree):
-        tree.type = ''
-
 #assigns a type to each node in the tree
 class TypeChecker(lark.visitors.Visitor_Recursive):
     def __init__(self, types):
@@ -26,6 +20,9 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
         ret = self._call_userfunc(tree)
         return changed or ret
     def __default__(self, tree):
+        #initializes the tree's type if this is the first pass of the checker
+        if not hasattr(tree, 'type'):
+            tree.type = ''
         orig = tree.type #keep track of original type of tree
         literals = { #map between node names and builtin type names
             'lit_number': 'Int',
