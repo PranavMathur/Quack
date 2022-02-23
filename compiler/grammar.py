@@ -62,8 +62,8 @@ block: "{" statement* "}"
      | statement
 
 ?assignment: l_exp [":" type] "=" r_exp -> assign
-          | access "=" r_exp           -> store_field
-          | op_assign
+           | access "=" r_exp           -> store_field
+           | op_assign
 
 op_assign: access "+=" r_exp -> plus_equals
          | access "-=" r_exp -> minus_equals

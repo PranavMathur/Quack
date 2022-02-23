@@ -53,7 +53,7 @@ class OpTransformer(lark.Transformer):
         method = data[:-7].upper() #extract the appropriate binary operator
         left, right = children #unpack the arguments to the operator
         #check if the LHS is a field access or just an lvalue
-        if isinstance(children[0], Tree):
+        if isinstance(children[0], Tree) and children[0].data == 'load_field':
             #handle assignment operators on fields
             #unpack object and field name for convenience
             obj, field = children[0].children
@@ -73,6 +73,8 @@ class OpTransformer(lark.Transformer):
                 ])
             ])
         else:
+            if isinstance(left, Tree):
+                left = left.children[0]
             #create the assignment subtree
             return Tree('assign', [
                 left, #LHS of assignment
