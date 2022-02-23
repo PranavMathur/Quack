@@ -59,8 +59,10 @@ class OpTransformer(lark.Transformer):
             obj, field = children[0].children
             #create the assignment subtree
             return Tree('store_field', [
-                obj, #object on which to set a field
-                field, #name of the field to set
+                Tree('load_field', [
+                    obj, #object on which to set a field
+                    field #name of the field to set
+                ]),
                 Tree('m_call', [ #value to set the field to
                     Tree('load_field', [ #LHS of operation is the current value
                         obj, #object from which to load a value

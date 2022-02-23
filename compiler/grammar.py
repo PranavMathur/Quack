@@ -61,15 +61,15 @@ condition: r_exp
 block: "{" statement* "}"
      | statement
 
-assignment: l_exp [":" type] "=" r_exp -> assign
+?assignment: l_exp [":" type] "=" r_exp -> assign
           | access "=" r_exp           -> store_field
           | op_assign
 
-op_assign: a_exp "+=" r_exp -> plus_equals
-         | a_exp "-=" r_exp -> minus_equals
-         | a_exp "*=" r_exp -> times_equals
-         | a_exp "/=" r_exp -> divide_equals
-         | a_exp "%=" r_exp -> mod_equals
+op_assign: access "+=" r_exp -> plus_equals
+         | access "-=" r_exp -> minus_equals
+         | access "*=" r_exp -> times_equals
+         | access "/=" r_exp -> divide_equals
+         | access "%=" r_exp -> mod_equals
 
 ?a_exp: NAME
       | r_exp "." NAME
