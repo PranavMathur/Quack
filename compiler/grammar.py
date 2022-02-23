@@ -62,7 +62,7 @@ block: "{" statement* "}"
      | statement
 
 assignment: l_exp [":" type] "=" r_exp -> assign
-          | r_exp "." NAME "=" r_exp   -> store_field
+          | access "=" r_exp           -> store_field
           | op_assign
 
 op_assign: a_exp "+=" r_exp -> plus_equals
@@ -82,22 +82,12 @@ op_assign: a_exp "+=" r_exp -> plus_equals
 
 //a right expression is an expression or a method call
 ?r_exp: expr
-      | m_call
-      | c_call
-      | r_exp "." NAME -> load_field
-
-//a method call is a right expression, a method name, and zero or more arguments
-m_call: r_exp "." NAME "(" args ")" -> m_call
 
 //a method argument is a right expression
 //zero or more arguments may be given
 //a trailing comma is allowed
 args: r_exp ("," r_exp)* (",")?
     |
-
-c_call: NAME "(" args ")"
-
-c_args: (r_exp ("," r_exp)*)?
 
 //an expression can be a combination of the following
 //combination of nonterminals
@@ -138,9 +128,14 @@ c_args: (r_exp ("," r_exp)*)?
         | product "/" unary -> divide
         | product "%" unary -> mod
 
-?unary: atom
+?unary: access
       | "-" unary   -> neg
       | "not" unary -> negate
+
+?access: atom
+       | access "." NAME              -> load_field
+       | access "." NAME "(" args ")" -> m_call
+       | NAME "(" args ")"            -> c_call
 
 //an atom can be a literal, a unary operation on an atom,
 //or a parenthesized expression
