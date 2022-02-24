@@ -276,6 +276,12 @@ def generate_file(class_):
         #if there are any fields, output their names
         for field in fields:
             f.write('.field %s\n' % field)
+        #for each method, output a forward declaration
+        for method in methods:
+            m_name = method['name']
+            #the constructor doesn't need a forward declaration
+            if m_name != '$constructor':
+                f.write('.method %s forward\n' % m_name)
         f.write('\n')
         #for each method, output assembly for the method
         for method in methods:
