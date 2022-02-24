@@ -6,10 +6,28 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
     def __init__(self, types):
         self.variables = {} #set to store types of initialized variables
         self.types = types #method tables - used to find return values
+        self.current_class = '' #name of the current class being checked
+        self.current_method = '' #name of the current method being checked
     #visit children of tree and root
     #return true if any of the childrens' types were changed
     #or if the root's type was changed
     def visit(self, tree):
+        if tree.data == 'class_':
+            #extract the current class name
+            self.current_class = str(tree.children[0].children[0])
+        elif tree.data == 'method':
+            #extract the current method name
+            self.current_method = str(tree.children[0])
+            #"this" is an object of the current type
+            self.variables = {'this': self.current_class}
+            #extract formal_args node from subtree
+            formal_args = tree.children[1].children
+            #iterate over formal parameters
+            for arg in formal_args:
+                #extract name and type from formal parameter
+                name, type = arg.children
+                #add name of parameter to variables set
+                self.variables[str(name)] = str(type)
         changed = False #changed is initially false
         for child in tree.children:
             if isinstance(child, lark.Tree):
