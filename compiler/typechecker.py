@@ -97,8 +97,8 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
                 method = self.types[left_type]['methods'][m_name]
             except KeyError:
                 #fail if method not found
-                err = f'Could not find method {m_name} of {left_type}'
-                raise CompileError(err)
+                e = 'Could not find method %r of %r' % (m_name, left_type)
+                raise CompileError(e)
             else:
                 ret_type = method['ret'] #retrieve return type of method
                 args = tree.children[2].children #fetch children of m_args
