@@ -1,5 +1,6 @@
 import lark
 from lark import Tree
+from compiler.errors import CompileError
 
 ops = (
     'plus',
@@ -39,6 +40,27 @@ class OpTransformer(lark.Transformer):
             ]),
             'NEGATE',
             Tree('args', []) #NEGATE takes no arguments
+        ])
+    def store_field(self, tree):
+        #rearrange a store_field node to look more like an assignment
+        #the grammar causes store_field to have a load_field child,
+        #and improperly accepts a method or constructor call as the LHS,
+        #both of which are fixed here
+        load, value = tree.children #unpack children for convenience
+        #fail if LHS is not a field access
+        if load.data != 'load_field':
+            #customize error message
+            typ = 'method' if load.data == 'm_call' else 'constructor'
+            e = 'Cannot assign to a %s call' % typ
+            raise CompileError(e)
+        #unpack children of load_field for convenience
+        obj, field = load.children
+        #construct return store_field node
+        #store_field now has the object, the name of the field, and the value
+        return Tree('store_field', [
+            obj,
+            field,
+            value
         ])
     #create a method call subtree with the appropriate binary op function
     def op_transform(self, data, children, meta):
