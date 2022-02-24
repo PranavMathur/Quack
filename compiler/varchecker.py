@@ -11,6 +11,14 @@ class VarChecker(lark.visitors.Visitor_Recursive):
         if tree.data == 'method':
             #"this" is available in any method
             self.variables = {'this'}
+            #extract formal_args node from subtree
+            formal_args = tree.children[1].children
+            #iterate over formal parameters
+            for arg in formal_args:
+                #extract name and type from formal parameter
+                name, type = arg.children
+                #add name of parameter to variables set
+                self.variables.add(str(name))
         #handle if statements and while loops
         if tree.data == 'if_stmt':
             self._if_stmt(tree)
