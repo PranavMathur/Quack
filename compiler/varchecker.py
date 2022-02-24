@@ -7,6 +7,10 @@ class VarChecker(lark.visitors.Visitor_Recursive):
         #store the set of variables currently in scope
         self.variables = set()
     def visit(self, tree):
+        #reset the set of seen variables at the beginning of each method
+        if tree.data == 'method':
+            #"this" is available in any method
+            self.variables = {'this'}
         #handle if statements and while loops
         if tree.data == 'if_stmt':
             self._if_stmt(tree)
