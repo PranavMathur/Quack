@@ -119,7 +119,31 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
                         raise CompileError('%r expected %r, received %r' % e)
             tree.type = ret_type #set overall type of m_call node
         elif tree.data == 'c_call':
-            tree.type = str(tree.children[0])
+            c_name = str(tree.children[0])
+            try:
+                class_ = self.types[c_name]
+            except KeyError:
+                #fail if class not found
+                e = 'Could not find class %r' % (c_name)
+                raise CompileError(e)
+            else:
+                args = tree.children[1].children
+                #pluck types of given arguments
+                arg_types = [child.type for child in args]
+                #fetch types of expected arguments
+                exp_types = class_['methods']['$constructor']['params']
+                #first check - check number of given arguments
+                if len(arg_types) != len(exp_types):
+                    #grammar!
+                    plural = 's' if len(exp_types) > 1 else ''
+                    e = (c_name, len(exp_types), plural, len(arg_types))
+                    raise CompileError('%r expected %d arg%s, received %d' % e)
+                #second check - check types of given arguments
+                for rec, exp in zip(arg_types, exp_types):
+                    if not is_compatible(rec, exp, self.types):
+                        e = (c_name, exp, rec)
+                        raise CompileError('%r expected %r, received %r' % e)
+            tree.type = c_name #set overall type of c_call node
         elif tree.data == 'ret_exp':
             tree.type = tree.children[0].type
         #return whether tree's type has changed
