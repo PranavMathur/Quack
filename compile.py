@@ -86,8 +86,12 @@ def main():
         #output code to files
         for class_ in classes:
             generate_file(class_)
-    except CompileError as e:
-        print('Error: ' + str(e), file=sys.stderr)
+    except (CompileError, lark.exceptions.VisitError) as e:
+        if isinstance(e, lark.exceptions.VisitError):
+            s = str(e.orig_exc)
+        else:
+            s = str(e)
+        print('Error: %s' % s, file=sys.stderr)
         if args.verbose:
             traceback.print_exc()
         exit(1)
