@@ -75,6 +75,37 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             #set the type of the assignment and the variable to the new type
             tree.type = new_type
             self.variables[name] = new_type
+        elif tree.data == 'store_field':
+            #unpack children for convenience
+            obj, field, value = tree.children
+            #convert field from token to string
+            field = str(field)
+            try:
+                #attempt to get type of field from method table
+                field_type = self.types[obj.type]['fields'][field]
+            except KeyError:
+                #fail if field was not found
+                e = 'Could not find field %r of %r' % (field, obj.type)
+                raise CompileError(e)
+            #check whether this is an initial declaration in the constructor
+            is_con = self.current_method == '$constructor'
+            is_this = obj.data == 'var' and obj.children[0] == 'this'
+            #if assignment is in constructor, modify type in method table
+            if is_con and is_this:
+                #find LCA of implied type and current type
+                new_type = common_ancestor(value.type, field_type, self.types)
+                #update method table and subtree with new type
+                self.types[obj.type]['fields'][field] = new_type
+                tree.type = new_type
+            else:
+                #get value of RHS of assignment
+                imp_type = value.type
+                #check type for compatibility with type from method table
+                if not is_compatible(imp_type, field_type, self.types):
+                    e = '%r is not a subclass of %r' % (imp_type, field_type)
+                    raise CompileError(e)
+                #update subtree with RHS type
+                tree.type = imp_type
         elif tree.data in ('and_exp', 'or_exp'):
             left, right = tree.children
             #check that both operands are Bools
