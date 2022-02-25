@@ -54,6 +54,20 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
         elif tree.data == 'var': #search variables map for assigned type
             name = str(tree.children[0])
             tree.type = self.variables[name]
+        elif tree.data == 'load_field':
+            #unpack children for convenience
+            obj, field = tree.children
+            #convert field from token to string
+            field = str(field)
+            try:
+                #attempt to retrieve type of field from method table
+                field_type = self.types[obj.type]['fields'][field]
+            except KeyError:
+                #fail if field was not found
+                e = 'Could not find field %r of %r' % (field, obj.type)
+                raise CompileError(e)
+            #update type of subtree
+            tree.type = field_type
         elif tree.data == 'assign': #map the variable name to the given type
             #get the name of the variable we are assigning
             name = str(tree.children[0])
