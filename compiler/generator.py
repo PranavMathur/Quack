@@ -8,7 +8,8 @@ preorder = (
     'and_exp',
     'or_exp',
     'if_stmt',
-    'while_lp'
+    'while_lp',
+    'store_field'
 )
 
 #generate assembly code from the parse tree
@@ -22,6 +23,8 @@ class Generator(lark.visitors.Visitor_Recursive):
         self.current_class = None
         #method object of the current method subtree
         self.current_method = None
+        #method table of builtin and user-defined classes
+        self.types = types
         #label prefix counter
         self.labels = dd(itertools.count) #stores count of label prefixes
     def emit(self, line, tab=True):
@@ -58,6 +61,15 @@ class Generator(lark.visitors.Visitor_Recursive):
         self.current_class = obj
         #store class object in result array
         self.classes_.append(obj)
+        #attempt to retrieve the fields of this class from the method table
+        try:
+            type_obj = self.types[name]
+        except KeyError:
+            #if class was not found, this is the main class
+            pass
+        else:
+            #populate class object with fields from method table
+            obj['fields'] = set(type_obj['fields'])
         #generate code for all methods in the class
         for method in tree.children[1].children[0].children:
             self.visit(method)
@@ -101,8 +113,20 @@ class Generator(lark.visitors.Visitor_Recursive):
         #push a string onto the stack
         self.emit('const %s' % tree.children[0])
     def var(self, tree):
-        #load a local variable onto the stack
-        self.emit('load %s' % tree.children[0])
+        #extract variable name from tree
+        v_name = str(tree.children[0])
+        #treat the "this" object specially - it has a $ alias
+        if v_name == 'this':
+            #load the "this" object onto the stack
+            self.emit('load $')
+        else:
+            #load a local variable onto the stack
+            self.emit('load %s' % tree.children[0])
+    def load_field(self, tree):
+        #unpack children for convenience
+        obj, field = tree.children
+        #load the given variable onto the stack
+        self.emit('load_field %s:%s' % (obj.type, field))
     def assign(self, tree):
         #store the top value on the stack into a local variable
         name = tree.children[0]
@@ -114,6 +138,19 @@ class Generator(lark.visitors.Visitor_Recursive):
         self.current_method['locals'][name] = type
         #emit a store instruction
         self.emit('store %s' % name)
+    def store_field(self, tree):
+        #unpack children for convenience
+        obj, field, value = tree.children
+        #visit in the opposite of the usual order - value then name
+        self.visit(value)
+        self.visit(obj)
+        c_name = obj.type
+        #if object type is the current class, use the $ alias
+        if c_name == self.current_class['name']:
+            c_name = '$'
+        #pop two values of the stack, then store the value of the second pop
+        #in the object from the first pop in the provided field
+        self.emit('store_field %s:%s' % (c_name, field))
     def m_call(self, tree):
         #emit a method call command and possibly a roll
         m_name = str(tree.children[1])
@@ -125,6 +162,12 @@ class Generator(lark.visitors.Visitor_Recursive):
         left_type = tree.children[0].type
         #emit a method call of the correct type
         self.emit('call %s:%s' % (left_type, tree.children[1]))
+    def c_call(self, tree):
+        c_name = str(tree.children[0])
+        #allocate space for a new object of type c_name
+        self.emit('new %s' % c_name)
+        #call the constructor on the new object
+        self.emit('call %s:$constructor' % c_name)
     def raw_rexp(self, tree):
         #if a statement is just a right_expression, the value of the expression
         #stays on the stack but is not used, so it can be popped
