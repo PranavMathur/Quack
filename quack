@@ -5,13 +5,18 @@ if [ "$name" == "" ]; then
     name="Main"
 fi
 
-python3 compile.py "$1" "${name}.asm" --name "$name"
+classes=`python3 compile.py "$1" "${name}.asm" --name "$name" --list`
 
 ret=$?
 if [ $ret -eq 0 ]; then
-    python3 assemble.py "${name}.asm" "OBJ/${name}.json"
-    ret=$?
-    if [ $ret -eq 0 ]; then
-        bin/tiny_vm "$name"
-    fi
+    for cls in $classes
+    do
+        python3 assemble.py "${cls}.asm" "OBJ/${cls}.json"
+        ret=$?
+        if [ $ret -ne 0 ]; then
+            exit 1
+        fi
+    done
 fi
+
+bin/tiny_vm "$name"

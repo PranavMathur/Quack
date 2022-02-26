@@ -25,6 +25,7 @@ def cli_parser():
     parser.add_argument('--name', nargs='?', default='Main')
     parser.add_argument('--tree', '-t', action='count', default=0)
     parser.add_argument('--verbose', '-v', action='store_true')
+    parser.add_argument('--list', '-l', action='store_true')
     return parser.parse_args()
 
 def main():
@@ -86,6 +87,10 @@ def main():
         #output code to files
         for class_ in classes:
             generate_file(class_)
+
+        if args.list:
+            names = [i['name'] for i in classes]
+            print(*names)
     except (CompileError, lark.exceptions.VisitError) as e:
         if isinstance(e, lark.exceptions.VisitError):
             s = str(e.orig_exc)
