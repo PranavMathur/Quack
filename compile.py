@@ -42,6 +42,7 @@ def main():
         #create initial parse tree
         tree = parser.parse(args.source.read())
 
+        #if one tree option was given, output state of tree after parsing
         if args.tree == 1:
             print(tree.pretty())
             return
@@ -63,6 +64,7 @@ def main():
         class_transformer = ClassTransformer(args.name)
         tree = class_transformer.transform(tree)
 
+        #if two tree options was given, output state of tree after transforming
         if args.tree == 2:
             print(tree.pretty())
             return
@@ -80,6 +82,7 @@ def main():
         while changed:
             changed = type_checker.visit(tree)
 
+        #generate class objects and method code
         classes = []
         generator = Generator(classes, types)
         generator.visit(tree)
@@ -88,17 +91,23 @@ def main():
         for class_ in classes:
             generate_file(class_)
 
+        #output space separated list of classes
+        #used by the compilation script
         if args.list:
             names = [i['name'] for i in classes]
             print(*names)
     except (CompileError, lark.exceptions.VisitError) as e:
+        #convert lark error to original exception
         if isinstance(e, lark.exceptions.VisitError):
             s = str(e.orig_exc)
         else:
             s = str(e)
+        #output compile error message
         print('Error: %s' % s, file=sys.stderr)
+        #if verbose, print original exception and stack trace
         if args.verbose:
             traceback.print_exc()
+        #exit with error code 1
         exit(1)
 
 if __name__ == '__main__' and not sys.flags.interactive:
