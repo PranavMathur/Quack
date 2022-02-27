@@ -365,19 +365,20 @@ def generate_file(class_):
     filename = name + '.asm'
     #open the output file for writing
     with open(filename, 'w') as f:
+        emit = lambda *s: print(*s, file=f) #convenience method
         #output class header with name and supertype
-        f.write('.class %s:%s\n' % (name, sup))
+        emit('.class %s:%s' % (name, sup))
         #if there are any fields, output their names
         for field in fields:
-            f.write('.field %s\n' % field)
+            emit('.field %s' % field)
 
         #for each method, output a forward declaration
         for method in methods:
             m_name = method['name']
             #the constructor doesn't need a forward declaration
             if m_name != '$constructor':
-                f.write('.method %s forward\n' % m_name)
-        f.write('\n')
+                emit('.method %s forward' % m_name)
+        emit()
 
         #for each method, output assembly for the method
         for method in methods:
@@ -388,17 +389,17 @@ def generate_file(class_):
             code = method['code']
 
             #output method header
-            f.write('.method %s\n' % m_name)
+            emit('.method %s' % m_name)
             #if the method takes arguments, output their names
             if args:
                 s = ','.join(args)
-                f.write('.args %s\n' % s)
+                emit('.args %s' % s)
             #if there are any local variables, output their names
             if locals:
                 s = ','.join(locals)
-                f.write('.local %s\n' % s)
+                emit('.local %s' % s)
 
             #output assembly for each instruction in the method
             for line in code:
-                f.write(line + '\n')
-            f.write('\n')
+                emit(line)
+            emit()
