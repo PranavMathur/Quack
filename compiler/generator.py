@@ -152,8 +152,12 @@ class Generator(lark.visitors.Visitor_Recursive):
     def load_field(self, tree):
         #unpack children for convenience
         obj, field = tree.children
+        obj_type = obj.type
+        #if object type is the current class, use the $ alias
+        if obj_type == self.current_class['name']:
+            obj_type = '$'
         #load the given variable onto the stack
-        self.emit('load_field %s:%s' % (obj.type, field))
+        self.emit('load_field %s:%s' % (obj_type, field))
 
     def assign(self, tree):
         #store the top value on the stack into a local variable
