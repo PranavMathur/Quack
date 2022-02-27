@@ -76,7 +76,12 @@ class FieldLoader(lark.visitors.Visitor_Recursive):
         self.initialized = set()
         #stores variables that may have been initialized
         self.seen = set()
+        #store current method name to check whether we are in the constructor
+        self.current_method = ''
     def visit(self, tree):
+        #store current method name
+        if tree.data == 'method':
+            self.current_method = str(tree.children[0])
         #handle if statements and while loops
         if tree.data == 'if_stmt':
             self._if_stmt(tree)
@@ -172,6 +177,9 @@ class FieldLoader(lark.visitors.Visitor_Recursive):
         #reset state of master fields set
         self.initialized = old_init
     def __default__(self, tree):
+        #only allow new fields to be defined in the constructor
+        if self.current_method != '$constructor':
+            return
         if tree.data == 'load_field':
             obj = tree.children[0]
             #only process loads from the "this" object
@@ -188,7 +196,9 @@ class FieldLoader(lark.visitors.Visitor_Recursive):
         elif tree.data == 'store_field':
             obj = tree.children[0]
             #only process stores to the "this" object
-            if not isinstance(obj, Tree) or not str(obj.children[0]) == 'this':
+            if (not isinstance(obj, Tree)
+                    or obj.data != 'var'
+                    or str(obj.children[0]) != 'this'):
                 return
             #get the name of the stored field
             field = str(tree.children[1])
