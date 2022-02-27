@@ -17,6 +17,5 @@ if [ $ret -eq 0 ]; then
             exit 1
         fi
     done
+    bin/tiny_vm "$name"
 fi
-
-bin/tiny_vm "$name"
