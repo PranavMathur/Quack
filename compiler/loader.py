@@ -271,7 +271,6 @@ class ReturnChecker(lark.visitors.Visitor_Recursive):
             #there exists a path without a return statement
             m_name = str(tree.children[0])
             ret_type = str(tree.children[2] or 'Nothing')
-            #print('did not find a return statement in %r' % m_name)
             if ret_type != 'Nothing':
                 e = '%r does not return on every path' % m_name
                 raise CompileError(e)

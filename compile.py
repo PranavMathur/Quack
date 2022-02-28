@@ -60,12 +60,12 @@ def main():
         field_loader = FieldLoader(types)
         field_loader.visit(tree)
 
-        return_checker = ReturnChecker()
-        return_checker.visit(tree)
-
         #creates main class for execution
         class_transformer = ClassTransformer(args.name)
         tree = class_transformer.transform(tree)
+
+        return_checker = ReturnChecker()
+        return_checker.visit(tree)
 
         #if two tree options was given, output state of tree after transforming
         if args.tree == 2:

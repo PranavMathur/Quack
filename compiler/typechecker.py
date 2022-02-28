@@ -223,9 +223,16 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             #type of the statement is type of the value
             tree.type = tree.children[0].type
             #extract return type of the current method
-            current_class = self.types[self.current_class]
-            current_method = current_class['methods'][self.current_method]
-            ret_type = current_method['ret']
+            try:
+                current_class = self.types[self.current_class]
+            except KeyError:
+                #if the above access failed, this is the main class
+                #the main class only has one method, the constructor
+                #the constructor has a return type of Nothing
+                ret_type = 'Nothing'
+            else:
+                current_method = current_class['methods'][self.current_method]
+                ret_type = current_method['ret']
             #check that value's type is subclass of method's return type
             if not is_compatible(tree.type, ret_type, self.types):
                 e = '%r must return %r, not %r'

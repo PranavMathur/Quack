@@ -109,16 +109,6 @@ class Generator(lark.visitors.Visitor_Recursive):
         for child in tree.children[3].children:
             self.visit(child)
 
-        #the constructor returns the "this" object
-        if name == '$constructor':
-            #load "this" onto the stack as the return value
-            self.emit('load $')
-        else:
-            #push nothing as return value - TODO: change this
-            self.emit('const nothing')
-        #return from the method, popping off arguments
-        self.emit('return %s' % len(obj['args']))
-
     def ret_exp(self, tree):
         #if this is the constructor, the returned object should be "this"
         if self.current_method['name'] == '$constructor':
