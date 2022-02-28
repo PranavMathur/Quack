@@ -240,6 +240,75 @@ class FieldLoader(lark.visitors.Visitor_Recursive):
             self.seen.add(field)
 
 
-#ensures each method has a return statement, if necessary
+#ensures each method has a return statement on every path
 class ReturnChecker(lark.visitors.Visitor_Recursive):
-    pass
+    def visit(self, tree):
+        #if and while are handled specially
+        if tree.data == 'if_stmt':
+            return self._if_stmt(tree)
+        elif tree.data == 'while_lp':
+            return self._while_lp(tree)
+        else:
+            #check for a return in any subtree of this tree
+            has_return = False
+            for child in tree.children:
+                if isinstance(child, lark.Tree):
+                    ret = self.visit(child)
+                    has_return = has_return or ret
+            ret = self._call_userfunc(tree)
+            return has_return or ret
+
+    def method(self, tree):
+        #extract statements from subtree
+        statements = tree.children[3].children
+        for statement in statements:
+            #if any top-level statement in the block passes the test,
+            #then the flow of execution will definitely hit a return
+            if self.visit(statement):
+                #the else clause will only execute if this break never does
+                break
+        else:
+            #there exists a path without a return statement
+            m_name = str(tree.children[0])
+            ret_type = str(tree.children[2] or 'Nothing')
+            #print('did not find a return statement in %r' % m_name)
+            if ret_type != 'Nothing':
+                e = '%r does not return on every path' % m_name
+                raise CompileError(e)
+            nothing = Tree('lit_nothing', [])
+            ret_node = Tree('ret_exp', [nothing])
+            statements.append(ret_node)
+
+    def ret_exp(self, tree):
+        #a return expression is trivially true
+        #if flow reaches this statement, the method will return
+        return True
+
+    def _if_stmt(self, tree):
+        if_cond, if_block, elifs, _else = tree.children
+        #first check - if the main block does not return, the entire block fails
+        if not self.visit(if_block):
+            return False
+        #second check - if there are any elifs, each must pass the check
+        for _elif in elifs.children:
+            elif_cond, elif_block = _elif.children
+            if not self.visit(elif_block):
+                return False
+        #last check - if there is no else, fail immediately
+        #otherwise, the else must pass the check
+        if _else.children:
+            else_block = _else.children[0]
+            if not self.visit(else_block):
+                return False
+        else:
+            return False
+        #flow will only reach this point if all above checks passed
+        return True
+
+    def _while_lp(self, tree):
+        #a while loop is never guaranteed to execute, so it always fails
+        return False
+
+    def __default__(self, tree):
+        #most statements are not ret_exps, so they do not guarantee a return
+        return False
