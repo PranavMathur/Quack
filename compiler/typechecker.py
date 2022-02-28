@@ -212,7 +212,17 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             tree.type = c_name #set overall type of c_call node
 
         elif tree.data == 'ret_exp':
+            #type of the statement is type of the value
             tree.type = tree.children[0].type
+            #extract return type of the current method
+            current_class = self.types[self.current_class]
+            current_method = current_class['methods'][self.current_method]
+            ret_type = current_method['ret']
+            #check that value's type is subclass of method's return type
+            if not is_compatible(tree.type, ret_type, self.types):
+                e = '%r must return %r, not %r'
+                e = e % (self.current_method, ret_type, tree.type)
+                raise CompileError(e)
 
         #return whether tree's type has changed
         return tree.type != orig
