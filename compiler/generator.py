@@ -33,7 +33,7 @@ class Generator(lark.visitors.Visitor_Recursive):
         #emits a line of code to the output array
         #adds a tab to the beginning by default
         if tab:
-            line = '\t' + line
+            line = '    ' + line
         self.current_method['code'].append(line)
 
     def label(self, prefix):
