@@ -21,8 +21,16 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
         elif tree.data == 'method':
             #extract the current method name
             self.current_method = str(tree.children[0])
-            #"this" is an object of the current type
-            self.variables = {'this': self.current_class}
+            #if this tree has been checked before, it will have a variables map
+            #reuse the old map if this is the case
+            if hasattr(tree, 'variables'):
+                self.variables = tree.variables
+            else:
+                #if this tree has not been checked, initialize a variables map
+                #"this" is an object of the current type
+                self.variables = {'this': self.current_class}
+                #store the variables map for future use
+                tree.variables = self.variables
             #extract formal_args node from subtree
             formal_args = tree.children[1].children
             #iterate over formal parameters
