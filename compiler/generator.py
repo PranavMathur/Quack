@@ -203,6 +203,9 @@ class Generator(lark.visitors.Visitor_Recursive):
 
     def c_call(self, tree):
         c_name = str(tree.children[0])
+        #if object type is the current class, use the $ alias
+        if c_name == self.current_class['name']:
+            c_name = '$'
         #allocate space for a new object of type c_name
         self.emit('new %s' % c_name)
         #call the constructor on the new object
