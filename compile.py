@@ -9,7 +9,7 @@ import sys
 from compiler.errors import CompileError
 from compiler.grammar import quack_grammar
 from compiler.generator import Generator, generate_file
-from compiler.loader import ClassLoader, FieldLoader
+from compiler.loader import ClassLoader, FieldLoader, ReturnChecker
 from compiler.transformer import OpTransformer, ClassTransformer
 from compiler.typechecker import TypeChecker
 from compiler.varchecker import VarChecker
@@ -59,6 +59,9 @@ def main():
         #and ensure that all fields are defined on all paths
         field_loader = FieldLoader(types)
         field_loader.visit(tree)
+
+        return_checker = ReturnChecker()
+        return_checker.visit(tree)
 
         #creates main class for execution
         class_transformer = ClassTransformer(args.name)

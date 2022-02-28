@@ -238,3 +238,8 @@ class FieldLoader(lark.visitors.Visitor_Recursive):
             self.initialized.add(field)
             #this field has been initialized on some path
             self.seen.add(field)
+
+
+#ensures each method has a return statement, if necessary
+class ReturnChecker(lark.visitors.Visitor_Recursive):
+    pass
