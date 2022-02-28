@@ -9,7 +9,8 @@ preorder = (
     'or_exp',
     'if_stmt',
     'while_lp',
-    'store_field'
+    'store_field',
+    'ret_exp'
 )
 
 
@@ -119,8 +120,17 @@ class Generator(lark.visitors.Visitor_Recursive):
         self.emit('return %s' % len(obj['args']))
 
     def ret_exp(self, tree):
-        num_args = len(self.current_method['args'])
-        self.emit('return %s' % num_args)
+        #if this is the constructor, the returned object should be "this"
+        if self.current_method['name'] == '$constructor':
+            self.emit('load $')
+            self.emit('return 0')
+        else:
+            #visit the expression to be returned
+            #ret_exp is preorder so that "none" is not visited in the above case
+            self.visit(tree.children[0])
+            #emit a return statement that pops off the arguments
+            num_args = len(self.current_method['args'])
+            self.emit('return %s' % num_args)
 
     def lit_number(self, tree):
         #push an integer onto the stack
