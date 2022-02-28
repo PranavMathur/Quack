@@ -118,6 +118,10 @@ class Generator(lark.visitors.Visitor_Recursive):
         #return from the method, popping off arguments
         self.emit('return %s' % len(obj['args']))
 
+    def ret_exp(self, tree):
+        num_args = len(self.current_method['args'])
+        self.emit('return %s' % num_args)
+
     def lit_number(self, tree):
         #push an integer onto the stack
         self.emit('const %s' % tree.children[0])
