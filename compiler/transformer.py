@@ -66,6 +66,13 @@ class OpTransformer(lark.Transformer):
             value
         ])
 
+    def ret_exp(self, tree):
+        #transform an empty return into a return none
+        ret_val = tree.children[0]
+        if ret_val is None:
+            ret_val = Tree('lit_nothing', [])
+        return Tree('ret_exp', [ret_val])
+
     #create a method call subtree with the appropriate binary op function
     def op_transform(self, data, children, meta):
         #desugar binary operations into method calls
