@@ -277,6 +277,8 @@ def check_inherited(types):
         defined = types[c_name]['methods']
         #only check methods that are in the supertype and the subtype
         for method in inherited:
+            if method == '$constructor':
+                continue
             sup_method = inherited[method]
             sub_method = defined[method]
             sup_params = sup_method['params']

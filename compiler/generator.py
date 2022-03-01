@@ -115,15 +115,14 @@ class Generator(lark.visitors.Visitor_Recursive):
     def ret_exp(self, tree):
         #if this is the constructor, the returned object should be "this"
         if self.current_method['name'] == '$constructor':
+            #ret_exp is preorder so that "none" is not visited
             self.emit('load $')
-            self.emit('return 0')
         else:
             #visit the expression to be returned
-            #ret_exp is preorder so that "none" is not visited in the above case
             self.visit(tree.children[0])
-            #emit a return statement that pops off the arguments
-            num_args = len(self.current_method['args'])
-            self.emit('return %s' % num_args)
+        #emit a return statement that pops off the arguments
+        num_args = len(self.current_method['args'])
+        self.emit('return %s' % num_args)
 
     def lit_number(self, tree):
         #push an integer onto the stack

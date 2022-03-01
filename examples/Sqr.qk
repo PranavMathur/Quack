@@ -28,7 +28,7 @@ class Rect(ll: Pt, ur: Pt) extends Obj {
   def string() : String {
       lr = Pt( this.ur._y(), this.ll._x() );  // lower right 
       ul = Pt( this.ll._x(), this.ur._y() );  // upper left
-      return "(" + this.ll.string() + ", "
+      return "(" + this.ll.string() + ","
                  +      ul.string() + ","
                  + this.ur.string() + ","
                  +      lr.string() + ")";
