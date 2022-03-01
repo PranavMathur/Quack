@@ -65,6 +65,7 @@ def main():
         class_transformer = ClassTransformer(args.name)
         tree = class_transformer.transform(tree)
 
+        #ensure each method has a return statement on every path if necessary
         return_checker = ReturnChecker()
         return_checker.visit(tree)
 
