@@ -244,7 +244,8 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
 
 
 #ensure that each type defines all instance methods declared in its superclass
-#ensure that each inherited type is compatible with the type in the superclass
+#and that each inherited type is compatible with the type in the superclass
+#ensure that overridden method signatures are compatible
 def check_inherited(types):
     #iterate over each type in the method table
     for c_name in types:
@@ -270,6 +271,35 @@ def check_inherited(types):
                     e = "'%s.%s' (%r) must be a subtype of '%s.%s' (%r)"
                     e %= (c_name, field, sub_type, s_name, field, sup_type)
                     raise CompileError(e)
+
+        #check methods for compatibility with superclass
+        inherited = types[s_name]['methods']
+        defined = types[c_name]['methods']
+        #only check methods that are in the supertype and the subtype
+        for method in inherited:
+            sup_method = inherited[method]
+            sub_method = defined[method]
+            sup_params = sup_method['params']
+            sub_params = sub_method['params']
+            #check that the arguments have the same number of parameters
+            if len(sup_params) != len(sub_params):
+                e = '%s:%s must have the same number of arguments as %s:%s'
+                e %= (c_name, method, s_name, method)
+                raise CompileError(e)
+            #check that each argument of the supertype is a subclass
+            #of the corresponding argument of the subtype
+            for (sup_p, sub_p) in zip(sup_params, sub_params):
+                if not is_compatible(sup_p, sub_p, types):
+                    e = '%r is not compatible with %r in %s:%s'
+                    e %= (sup_p, sub_p, c_name, method)
+                    raise CompileError(e)
+            #check that the subtype returns a subclass of the supertype method
+            sup_ret = sup_method['ret']
+            sub_ret = sub_method['ret']
+            if not is_compatible(sub_ret, sup_ret, types):
+                e = 'Return type of %r must be a subclass of %r'
+                e %= (method, sup_ret)
+                raise CompileError(e)
 
 
 #check if the first argument is a subclass of the second argument

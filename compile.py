@@ -87,6 +87,7 @@ def main():
             changed = type_checker.visit(tree)
 
         #ensure classes defined all fields inherited from supertypes
+        #ensure overridden method signatures are compatible
         check_inherited(types)
 
         #generate class objects and method code
