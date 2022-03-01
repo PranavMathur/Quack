@@ -243,6 +243,35 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
         return tree.type != orig
 
 
+#ensure that each type defines all instance methods declared in its superclass
+#ensure that each inherited type is compatible with the type in the superclass
+def check_inherited(types):
+    #iterate over each type in the method table
+    for c_name in types:
+        #only process type if it is not Obj - only Obj extends itself
+        s_name = types[c_name]['super']
+        if c_name == s_name:
+            continue
+        #extract defined fields from both classes
+        inherited = types[s_name]['fields']
+        defined = types[c_name]['fields']
+        #check each field in the superclass for compliance
+        for field in inherited:
+            try:
+                #attempt to find the type of the field in this class
+                sub_type = defined[field]
+            except KeyError:
+                e = '%r must define field %r' % (c_name, field)
+                raise CompileError(e) from None
+            else:
+                #check that this class's field is a subtype of the super's
+                sup_type = inherited[field]
+                if not is_compatible(sub_type, sup_type, types):
+                    e = "'%s.%s' (%r) must be a subtype of '%s.%s' (%r)"
+                    e %= (c_name, field, sub_type, s_name, field, sup_type)
+                    raise CompileError(e)
+
+
 #check if the first argument is a subclass of the second argument
 def is_compatible(typ, sup, types):
     if typ == sup: #most common check - return true if args are equal

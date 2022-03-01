@@ -11,7 +11,7 @@ from compiler.grammar import quack_grammar
 from compiler.generator import Generator, generate_file
 from compiler.loader import ClassLoader, FieldLoader, ReturnChecker
 from compiler.transformer import OpTransformer, ClassTransformer
-from compiler.typechecker import TypeChecker
+from compiler.typechecker import TypeChecker, check_inherited
 from compiler.varchecker import VarChecker
 
 types_file = 'builtin_methods.json'
@@ -35,7 +35,8 @@ def main():
         types = json.load(f)
     parser = lark.Lark(
         quack_grammar,
-        parser='lalr'
+        parser='lalr',
+        propagate_positions=True
     )
     
     try:
@@ -84,6 +85,9 @@ def main():
         #decorate the tree until no node's types are changed
         while changed:
             changed = type_checker.visit(tree)
+
+        #ensure classes defined all fields inherited from supertypes
+        check_inherited(types)
 
         #generate class objects and method code
         classes = []
