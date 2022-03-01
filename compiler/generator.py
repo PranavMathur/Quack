@@ -63,6 +63,7 @@ class Generator(lark.visitors.Visitor_Recursive):
             'name': name,
             'super': sup,
             'methods': [],
+            'inherited_fields': set(),
             'fields': set()
         }
 
@@ -73,12 +74,14 @@ class Generator(lark.visitors.Visitor_Recursive):
         #attempt to retrieve the fields of this class from the method table
         try:
             type_obj = self.types[name]
+            sup_obj = self.types[sup]
         except KeyError:
             #if class was not found, this is the main class
             pass
         else:
             #populate class object with fields from method table
             obj['fields'] = set(type_obj['fields'])
+            obj['inherited_fields'] = set(sup_obj['fields'])
 
         #generate code for all methods in the class
         for method in tree.children[1].children[0].children:
@@ -370,6 +373,7 @@ def generate_file(class_):
     name = class_['name']
     sup = class_['super']
     methods = class_['methods']
+    inherited_fields = class_['inherited_fields']
     fields = class_['fields']
 
     #data will be output to file with the same name as the class
@@ -381,7 +385,8 @@ def generate_file(class_):
         emit('.class %s:%s' % (name, sup))
         #if there are any fields, output their names
         for field in fields:
-            emit('.field %s' % field)
+            if field not in inherited_fields:
+                emit('.field %s' % field)
 
         #for each method, output a forward declaration
         for method in methods:
