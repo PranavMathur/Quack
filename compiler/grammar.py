@@ -34,6 +34,7 @@ main_block: statement*
           | "return" [r_exp] ";" -> ret_exp
           | if_stmt
           | while_lp
+          | typecase
 
 //an if statement consists of a condition, an execution block,
 //zero or more elif statements, and an optional else statement
@@ -55,6 +56,10 @@ while_lp: "while" condition block
 //a condition is a right expression
 //the type checker will ensure that this evaluates to a boolean
 condition: r_exp
+
+typecase: "typecase" r_exp "{" type_alternative* "}"
+
+type_alternative: NAME ":" NAME block
 
 //a block may be a collection of statements within braces
 //or a single statement
