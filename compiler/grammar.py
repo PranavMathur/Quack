@@ -57,7 +57,9 @@ while_lp: "while" condition block
 //the type checker will ensure that this evaluates to a boolean
 condition: r_exp
 
-typecase: "typecase" r_exp "{" type_alternative* "}"
+typecase: "typecase" r_exp "{" type_alternatives "}"
+
+type_alternatives: type_alternative*
 
 type_alternative: NAME ":" NAME block
 

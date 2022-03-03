@@ -27,6 +27,8 @@ class VarChecker(lark.visitors.Visitor_Recursive):
             self._if_stmt(tree)
         elif tree.data == 'while_lp':
             self._while_lp(tree)
+        elif tree.data == 'typecase':
+            self._typecase(tree)
         else:
             #handle everything else (assignments and references)
             for child in tree.children:
@@ -89,7 +91,7 @@ class VarChecker(lark.visitors.Visitor_Recursive):
             #if there is no else block, pretend it added no new variables
             var_sets.append(self.variables)
 
-        #compute intersectin of all new variable sets
+        #compute intersection of all new variable sets
         new_vars = var_sets[0].intersection(*var_sets)
         #update the master variables set with the new variables
         self.variables.update(new_vars)
@@ -109,6 +111,49 @@ class VarChecker(lark.visitors.Visitor_Recursive):
         self.visit(block)
         #reset state of master variables set
         self.variables = old_variables
+
+    def _typecase(self, tree):
+        #unpack children for convenience
+        expr, alts = tree.children
+
+        #check typecase expression for compliance
+        self.visit(expr)
+
+        #used to store sets of variables found in each alternative
+        var_sets = []
+        #store master variables set before checking alternatives
+        old_variables = self.variables
+
+        #store whether or not a default alternative exists
+        #if there is an alternative with the type Obj,
+        #we know that flow will travel to one of the alternatives
+        has_obj = False
+        #iterate over the alternatives
+        for alt in alts.children:
+            #unpack children for convenience
+            name, type, block = alt.children
+            if type == 'Obj':
+                has_obj = True
+            #make copy of master set for checking this alternative
+            self.variables = old_variables.copy()
+            #add the new typecase variable
+            self.variables.add(name)
+            self.visit(block)
+
+            #store the new set of defined variables
+            var_sets.append(self.variables)
+            #reset variables to the master set
+            self.variables = old_variables
+
+        #if there is not Obj branch, pretend there was an empty branch
+        #that declared no new variables
+        if not has_obj:
+            var_sets.append(self.variables)
+
+        #compute intersection of all new variable sets
+        new_vars = var_sets[0].intersection(*var_sets)
+        #update the master variables set with the new variables
+        self.variables.update(new_vars)
 
     def __default__(self, tree):
         if tree.data == 'var':
