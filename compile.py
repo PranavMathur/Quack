@@ -20,8 +20,6 @@ types_file = 'builtin_methods.json'
 def cli_parser():
     parser = argparse.ArgumentParser(prog='translate')
     parser.add_argument('source', type=argparse.FileType('r'))
-    parser.add_argument('target', nargs='?',
-                        type=argparse.FileType('w'), default=sys.stdout)
     parser.add_argument('--name', nargs='?', default='Main')
     parser.add_argument('--tree', '-t', action='count', default=0)
     parser.add_argument('--verbose', '-v', action='store_true')

@@ -131,6 +131,13 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             tree.type = new_type
             self.variables[name] = new_type
 
+            #ensure that the explicit type given is compatible with the new type
+            if tree.children[1] is not None:
+                given_type = str(tree.children[1])
+                if not is_subclass(new_type, given_type, self.types):
+                    e = '%r is not a subclass of %r' % (new_type, given_type)
+                    raise CompileError(e)
+
         elif tree.data == 'store_field':
             #unpack children for convenience
             obj, field, value = tree.children
