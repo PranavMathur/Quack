@@ -40,6 +40,9 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
                 #add name of parameter to variables set
                 self.variables[str(name)] = str(type)
 
+        elif tree.data == 'type_alternative':
+            return self._typecase(tree)
+
         changed = False #changed is initially false
         for child in tree.children:
             if isinstance(child, lark.Tree):
@@ -49,6 +52,25 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
         #if root's type was changed, return true
         ret = self._call_userfunc(tree)
         return changed or ret
+
+    def _typecase(self, tree):
+        #unpack children for convenience
+        name, type, block = tree.children
+        #store original type of the typecase variable
+        #and remove it from the variables map
+        orig_type = self.variables.pop(name, None)
+        #set the type of the typecase variable unconditionally
+        #for the entirety of the block
+        self.variables[name] = type
+        #type check the block and store whether it had any changes
+        changed = self.visit(block)
+        #if the name was already in the variable set, restore its value
+        if orig_type:
+            self.variables[name] = orig_type
+        else:
+            #if the name did not exist before, purge it from the variable set
+            del self.variables[name]
+        return changed
 
     def __default__(self, tree):
         #initializes the tree's type if this is the first pass of the checker
