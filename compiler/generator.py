@@ -9,6 +9,7 @@ preorder = (
     'or_exp',
     'if_stmt',
     'while_lp',
+    'typecase',
     'store_field',
     'ret_exp'
 )
@@ -29,6 +30,8 @@ class Generator(lark.visitors.Visitor_Recursive):
         self.types = types
         #stores count of label prefixes
         self.labels = dd(itertools.count)
+        #stores count of temporary variables
+        self.temp_vars = 0
 
     def emit(self, line, tab=True):
         #emits a line of code to the output array
@@ -41,6 +44,11 @@ class Generator(lark.visitors.Visitor_Recursive):
         #generates a unique label name with the given prefix
         num = next(self.labels[prefix]) #get current number for given prefix
         return f'{prefix}_{num}'
+
+    def temp_var(self):
+        ret = '__TEMP_VAR%d' % self.temp_vars
+        self.temp_vars += 1
+        return ret
 
     def visit(self, tree):
         #some nodes need to be visited before their children
@@ -364,6 +372,47 @@ class Generator(lark.visitors.Visitor_Recursive):
         self.visit(condition)
         #if condition evaluates to true, jump to beginning of block
         self.emit('jump_if %s' % block_label)
+
+    def typecase(self, tree):
+        #unpack children for convenience
+        expr, alts = tree.children
+        #generate a temporary variable name to store the checked expression
+        temp_var = self.temp_var()
+        self.current_method['locals'][temp_var] = ''
+        #evaluate the expression and store it in a temp variable
+        self.visit(expr)
+        self.emit('store %s' % temp_var)
+
+        #pregenerate labels for each alternative after the first
+        labels = []
+        for alt in alts.children[1:]:
+            labels.append(self.label('type_alt'))
+        #there will always be a join label at the end
+        labels.append(self.label('type_join'))
+
+        #iterate over alternatives and labels
+        for alt, label in zip(alts.children, labels):
+            name, type, block = alt.children
+            #add the current typecase variable to the list of locals
+            self.current_method['locals'][name] = type
+
+            #test the expression against the given type
+            #if it fails, jump to the next alternative/join point
+            self.emit('load %s' % temp_var)
+            self.emit('is_instance %s' % type)
+            self.emit('jump_ifnot %s' % label)
+
+            #if the expression was of the correct type, assign it
+            #to the given variable name and evaluate the block
+            self.emit('load %s' % temp_var)
+            self.emit('store %s' % name)
+            self.visit(block)
+            #jump to the join label, unless this is the last alternative
+            if label != labels[-1]:
+                self.emit('jump %s' % labels[-1])
+
+            #output the label for the next alternative
+            self.emit('%s:' % label, False)
 
 
 #generates assembly file for the given class object
