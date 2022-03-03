@@ -18,7 +18,7 @@ types_file = 'builtin_methods.json'
 
 #read an input and output file from the command line arguments
 def cli_parser():
-    parser = argparse.ArgumentParser(prog='translate')
+    parser = argparse.ArgumentParser(prog='qcc')
     parser.add_argument('source', type=argparse.FileType('r'))
     parser.add_argument('--name', nargs='?', default='Main')
     parser.add_argument('--tree', '-t', action='count', default=0)
