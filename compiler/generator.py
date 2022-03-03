@@ -393,6 +393,8 @@ class Generator(lark.visitors.Visitor_Recursive):
         #iterate over alternatives and labels
         for alt, label in zip(alts.children, labels):
             name, type, block = alt.children
+            if type == self.current_class['name']:
+                type = '$'
             #add the current typecase variable to the list of locals
             self.current_method['locals'][name] = type
 
