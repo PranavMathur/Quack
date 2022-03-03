@@ -98,6 +98,8 @@ class FieldLoader(lark.visitors.Visitor_Recursive):
             self._if_stmt(tree)
         elif tree.data == 'while_lp':
             self._while_lp(tree)
+        elif tree.data == 'typecase':
+            self._typecase(tree)
         else:
             #handle everything else (stores and loads)
             for child in tree.children:
@@ -203,6 +205,47 @@ class FieldLoader(lark.visitors.Visitor_Recursive):
         #reset state of master fields set
         self.initialized = old_init
 
+    def _typecase(self, tree):
+        #unpack children for convenience
+        expr, alts = tree.children
+
+        #check typecase expression for compliance
+        self.visit(expr)
+
+        #used to store sets of fields found in each alternative
+        field_sets = []
+        #store master fields set before checking alternatives
+        old_init = self.initialized
+
+        #store whether or not a default alternative exists
+        #if there is an alternative with the type Obj,
+        #we know that flow will travel to one of the alternatives
+        has_obj = False
+        #iterate over the alternatives
+        for alt in alts.children:
+            #unpack children for convenience
+            name, type, block = alt.children
+            if type == 'Obj':
+                has_obj = True
+            #make copy of master set for checking this alternative
+            self.initialized = old_init.copy()
+            self.visit(block)
+
+            #store the new set of defined variables
+            field_sets.append(self.initialized)
+            #reset variables to the master set
+            self.initialized = old_init
+
+        #if there is not Obj branch, pretend there was an empty branch
+        #that declared no new variables
+        if not has_obj:
+            field_sets.append(self.initialized)
+
+        #compute intersection of all new variable sets
+        new_vars = field_sets[0].intersection(*field_sets)
+        #update the master variables set with the new variables
+        self.initialized.update(new_vars)
+
     def __default__(self, tree):
         #only allow new fields to be defined in the constructor
         if self.current_method != '$constructor':
@@ -248,6 +291,8 @@ class ReturnChecker(lark.visitors.Visitor_Recursive):
             return self._if_stmt(tree)
         elif tree.data == 'while_lp':
             return self._while_lp(tree)
+        elif tree.data == 'typecase':
+            return self._typecase(tree)
         else:
             #check for a return in any subtree of this tree
             has_return = False
@@ -307,6 +352,21 @@ class ReturnChecker(lark.visitors.Visitor_Recursive):
     def _while_lp(self, tree):
         #a while loop is never guaranteed to execute, so it always fails
         return False
+
+    def _typecase(self, tree):
+        expr, alts = tree.children
+        has_obj = False
+        for alt in alts.children:
+            name, type, block = alt.children
+            if type == 'Obj':
+                has_obj = True
+            #if any alternative does not have a return,
+            #then the typecase does not have a return
+            if not self.visit(block):
+                return False
+        #if every alternative has a return, then the typecase has a return
+        #if there was a default alternative
+        return has_obj
 
     def __default__(self, tree):
         #most statements are not ret_exps, so they do not guarantee a return
