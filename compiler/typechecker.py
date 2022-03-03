@@ -119,7 +119,7 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             #get the implied type of the right side of the assignment
             imp_type = tree.children[2].type
 
-            if not is_compatible(imp_type, given_type, self.types):
+            if not is_subclass(imp_type, given_type, self.types):
                 e = '%r is not a subclass of %r' % (imp_type, given_type)
                 raise CompileError(e)
 
@@ -158,7 +158,7 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
                 #get value of RHS of assignment
                 imp_type = value.type
                 #check type for compatibility with type from method table
-                if not is_compatible(imp_type, field_type, self.types):
+                if not is_subclass(imp_type, field_type, self.types):
                     e = '%r is not a subclass of %r' % (imp_type, field_type)
                     raise CompileError(e)
                 #update subtree with RHS type
@@ -207,7 +207,7 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
 
                 #second check - check types of given arguments
                 for rec, exp in zip(arg_types, exp_types):
-                    if not is_compatible(rec, exp, self.types):
+                    if not is_subclass(rec, exp, self.types):
                         e = (m_name, exp, rec)
                         raise CompileError('%r expected %r, received %r' % e)
             tree.type = ret_type #set overall type of m_call node
@@ -236,7 +236,7 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
 
                 #second check - check types of given arguments
                 for rec, exp in zip(arg_types, exp_types):
-                    if not is_compatible(rec, exp, self.types):
+                    if not is_subclass(rec, exp, self.types):
                         e = (c_name, exp, rec)
                         raise CompileError('%r expected %r, received %r' % e)
             tree.type = c_name #set overall type of c_call node
@@ -256,7 +256,7 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
                 current_method = current_class['methods'][self.current_method]
                 ret_type = current_method['ret']
             #check that value's type is subclass of method's return type
-            if not is_compatible(tree.type, ret_type, self.types):
+            if not is_subclass(tree.type, ret_type, self.types):
                 e = '%r must return %r, not %r'
                 e = e % (self.current_method, ret_type, tree.type)
                 raise CompileError(e)
@@ -289,7 +289,7 @@ def check_inherited(types):
             else:
                 #check that this class's field is a subtype of the super's
                 sup_type = inherited[field]
-                if not is_compatible(sub_type, sup_type, types):
+                if not is_subclass(sub_type, sup_type, types):
                     e = "'%s.%s' (%r) must be a subtype of '%s.%s' (%r)"
                     e %= (c_name, field, sub_type, s_name, field, sup_type)
                     raise CompileError(e)
@@ -313,21 +313,21 @@ def check_inherited(types):
             #check that each argument of the supertype is a subclass
             #of the corresponding argument of the subtype
             for (sup_p, sub_p) in zip(sup_params, sub_params):
-                if not is_compatible(sup_p, sub_p, types):
+                if not is_subclass(sup_p, sub_p, types):
                     e = '%r is not compatible with %r in %s:%s'
                     e %= (sup_p, sub_p, c_name, method)
                     raise CompileError(e)
             #check that the subtype returns a subclass of the supertype method
             sup_ret = sup_method['ret']
             sub_ret = sub_method['ret']
-            if not is_compatible(sub_ret, sup_ret, types):
+            if not is_subclass(sub_ret, sup_ret, types):
                 e = 'Return type of %r must be a subclass of %r'
                 e %= (method, sup_ret)
                 raise CompileError(e)
 
 
 #check if the first argument is a subclass of the second argument
-def is_compatible(typ, sup, types):
+def is_subclass(typ, sup, types):
     if typ == sup: #most common check - return true if args are equal
         return True
     #traverse up the tree while match is not found
