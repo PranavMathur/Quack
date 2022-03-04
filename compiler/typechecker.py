@@ -282,13 +282,17 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
 #ensure that each type defines all instance methods declared in its superclass
 #and that each inherited type is compatible with the type in the superclass
 #ensure that overridden method signatures are compatible
-def check_inherited(types):
-    #iterate over each type in the method table
-    for c_name in types:
-        #only process type if it is not Obj - only Obj extends itself
-        s_name = types[c_name]['super']
-        if c_name == s_name:
+def check_inherited(tree, types):
+    classes = tree.children[0]
+    #iterate over each user-defined class in the program
+    for class_ in classes.children:
+        c_name = str(class_.children[0].children[0])
+        #the main class is not in the method table
+        if c_name not in types:
+            #skip the main class, as it has no fields or methods
             continue
+        s_name = types[c_name]['super']
+
         #extract defined fields from both classes
         inherited = types[s_name]['fields']
         defined = types[c_name]['fields']
@@ -299,45 +303,49 @@ def check_inherited(types):
                 sub_type = defined[field]
             except KeyError:
                 e = '%r must define field %r' % (c_name, field)
-                raise CompileError(e) from None
+                raise CompileError(e, class_.meta) from None
             else:
                 #check that this class's field is a subtype of the super's
                 sup_type = inherited[field]
                 if not is_subclass(sub_type, sup_type, types):
                     e = "'%s.%s' (%r) must be a subtype of '%s.%s' (%r)"
                     e %= (c_name, field, sub_type, s_name, field, sup_type)
-                    raise CompileError(e)
+                    raise CompileError(e, class_.meta)
 
+        methods = class_.children[1].children[0]
         #check methods for compatibility with superclass
         inherited = types[s_name]['methods']
         defined = types[c_name]['methods']
         #only check methods that are in the supertype and the subtype
-        for method in inherited:
-            if method == '$constructor':
+        for method in methods.children:
+            m_name = str(method.children[0])
+            if m_name not in inherited:
                 continue
-            sup_method = inherited[method]
-            sub_method = defined[method]
+            if m_name == '$constructor':
+                continue
+            sup_method = inherited[m_name]
+            sub_method = defined[m_name]
             sup_params = sup_method['params']
             sub_params = sub_method['params']
             #check that the arguments have the same number of parameters
             if len(sup_params) != len(sub_params):
                 e = '%s:%s must have the same number of arguments as %s:%s'
-                e %= (c_name, method, s_name, method)
-                raise CompileError(e)
+                e %= (c_name, m_name, s_name, m_name)
+                raise CompileError(e, method.meta)
             #check that each argument of the supertype is a subclass
             #of the corresponding argument of the subtype
             for (sup_p, sub_p) in zip(sup_params, sub_params):
                 if not is_subclass(sup_p, sub_p, types):
                     e = '%r is not compatible with %r in %s:%s'
-                    e %= (sup_p, sub_p, c_name, method)
-                    raise CompileError(e)
+                    e %= (sup_p, sub_p, c_name, m_name)
+                    raise CompileError(e, method.meta)
             #check that the subtype returns a subclass of the supertype method
             sup_ret = sup_method['ret']
             sub_ret = sub_method['ret']
             if not is_subclass(sub_ret, sup_ret, types):
-                e = 'Return type of %r must be a subclass of %r'
-                e %= (method, sup_ret)
-                raise CompileError(e)
+                e = 'Return type of %s:%s must be a subclass of %r'
+                e %= (c_name, m_name, sup_ret)
+                raise CompileError(e, method.meta)
 
 
 #check if the first argument is a subclass of the second argument

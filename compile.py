@@ -86,7 +86,7 @@ def main():
 
         #ensure classes defined all fields inherited from supertypes
         #ensure overridden method signatures are compatible
-        check_inherited(types)
+        check_inherited(tree, types)
 
         #generate class objects and method code
         classes = []
