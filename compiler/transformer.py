@@ -54,7 +54,7 @@ class OpTransformer(lark.Transformer):
             #customize error message
             typ = 'method' if load.data == 'm_call' else 'constructor'
             e = 'Cannot assign to a %s call' % typ
-            raise CompileError(e)
+            raise CompileError(e, tree.meta)
 
         #unpack children of load_field for convenience
         obj, field = load.children

@@ -103,7 +103,7 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             except KeyError:
                 #fail if field was not found
                 e = 'Could not find field %r of %r' % (field, obj.type)
-                raise CompileError(e)
+                raise CompileError(e, tree.meta)
             #update type of subtree
             tree.type = field_type
 
@@ -121,7 +121,7 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
 
             if not is_subclass(imp_type, given_type, self.types):
                 e = '%r is not a subclass of %r' % (imp_type, given_type)
-                raise CompileError(e)
+                raise CompileError(e, tree.meta)
 
             #get the current type of the variable if it exists, blank otherwise
             old_type = self.variables.get(name, '')
@@ -136,7 +136,7 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
                 given_type = str(tree.children[1])
                 if not is_subclass(new_type, given_type, self.types):
                     e = '%r is not a subclass of %r' % (new_type, given_type)
-                    raise CompileError(e)
+                    raise CompileError(e, tree.meta)
 
         elif tree.data == 'store_field':
             #unpack children for convenience
@@ -149,7 +149,7 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             except KeyError:
                 #fail if field was not found
                 e = 'Could not find field %r of %r' % (field, obj.type)
-                raise CompileError(e)
+                raise CompileError(e, tree.meta)
 
             #check whether this is an initial declaration in the constructor
             is_con = self.current_method == '$constructor'
@@ -167,7 +167,7 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
                 #check type for compatibility with type from method table
                 if not is_subclass(imp_type, field_type, self.types):
                     e = '%r is not a subclass of %r' % (imp_type, field_type)
-                    raise CompileError(e)
+                    raise CompileError(e, tree.meta)
                 #update subtree with RHS type
                 tree.type = imp_type
 
@@ -175,14 +175,17 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             left, right = tree.children
             #check that both operands are Bools
             if left.type != 'Bool' or right.type != 'Bool':
-                raise CompileError('Operands of and/or must be Bool')
+                op = tree.data[:-4]
+                e = 'Operands of %r must be Bool' % op
+                raise CompileError(e, tree.meta)
             #the type of a logical expression is always Bool
             tree.type = 'Bool'
 
         elif tree.data == 'condition':
             #check that conditional has type Bool
             if tree.children[0].type != 'Bool':
-                raise CompileError('Type of condition must be Bool')
+                e = 'Type of condition must be Bool'
+                raise CompileError(e, tree.meta)
             #the type of a condition is always Bool
             tree.type = 'Bool'
 
@@ -196,7 +199,7 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             except KeyError:
                 #fail if method not found
                 e = 'Could not find method %r of %r' % (m_name, left_type)
-                raise CompileError(e)
+                raise CompileError(e, tree.meta)
             else:
                 ret_type = method['ret'] #retrieve return type of method
                 args = tree.children[2].children #fetch children of m_args
@@ -210,13 +213,15 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
                     #grammar!
                     plural = 's' if len(exp_types) > 1 else ''
                     e = (m_name, len(exp_types), plural, len(arg_types))
-                    raise CompileError('%r expected %d arg%s, received %d' % e)
+                    e = '%r expected %d arg%s, received %d' % e
+                    raise CompileError(e, tree.meta)
 
                 #second check - check types of given arguments
                 for rec, exp in zip(arg_types, exp_types):
                     if not is_subclass(rec, exp, self.types):
                         e = (m_name, exp, rec)
-                        raise CompileError('%r expected %r, received %r' % e)
+                        e = '%r expected %r, received %r' % e
+                        raise CompileError(e, tree.meta)
             tree.type = ret_type #set overall type of m_call node
 
         elif tree.data == 'c_call':
@@ -226,7 +231,7 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             except KeyError:
                 #fail if class not found
                 e = 'Could not find class %r' % (c_name)
-                raise CompileError(e)
+                raise CompileError(e, tree.meta)
             else:
                 args = tree.children[1].children
                 #pluck types of given arguments
@@ -239,13 +244,15 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
                     #grammar!
                     plural = 's' if len(exp_types) > 1 else ''
                     e = (c_name, len(exp_types), plural, len(arg_types))
-                    raise CompileError('%r expected %d arg%s, received %d' % e)
+                    e = '%r expected %d arg%s, received %d' % e
+                    raise CompileError(e, tree.meta)
 
                 #second check - check types of given arguments
                 for rec, exp in zip(arg_types, exp_types):
                     if not is_subclass(rec, exp, self.types):
                         e = (c_name, exp, rec)
-                        raise CompileError('%r expected %r, received %r' % e)
+                        e = '%r expected %r, received %r' % e
+                        raise CompileError(e, tree.meta)
             tree.type = c_name #set overall type of c_call node
 
         elif tree.data == 'ret_exp':
@@ -266,7 +273,7 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
             if not is_subclass(tree.type, ret_type, self.types):
                 e = '%r must return %r, not %r'
                 e = e % (self.current_method, ret_type, tree.type)
-                raise CompileError(e)
+                raise CompileError(e, tree.meta)
 
         #return whether tree's type has changed
         return tree.type != orig

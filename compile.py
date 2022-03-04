@@ -106,11 +106,18 @@ def main():
     except (CompileError, lark.exceptions.VisitError) as e:
         #convert lark error to original exception
         if isinstance(e, lark.exceptions.VisitError):
-            s = str(e.orig_exc)
+            e = e.orig_exc
+        s = str(e)
+        #prefix error message with location, if given
+        if e.meta is not None and not e.meta.empty:
+            filename = args.source.name
+            line = e.meta.line
+            column = e.meta.column
+            prefix = '%s (%d:%d)' % (filename, line, column)
         else:
-            s = str(e)
+            prefix = 'Error'
         #output compile error message
-        print('Error: %s' % s, file=sys.stderr)
+        print('%s: %s' % (prefix, s), file=sys.stderr)
         #if verbose, print original exception and stack trace
         if args.verbose:
             traceback.print_exc()

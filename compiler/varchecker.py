@@ -162,7 +162,7 @@ class VarChecker(lark.visitors.Visitor_Recursive):
             if name not in self.variables:
                 #fail if variable is not found
                 e = 'Variable %r is not defined' % name
-                raise CompileError(e)
+                raise CompileError(e, tree.meta)
         elif tree.data == 'assign':
             #add variable name to variables set
             name = str(tree.children[0])

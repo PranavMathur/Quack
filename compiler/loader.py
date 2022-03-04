@@ -117,7 +117,7 @@ class FieldLoader(lark.visitors.Visitor_Recursive):
                 s = ', '.join(free_fields)
                 word = 'are' if len(free_fields) > 1 else 'is'
                 e = '%r %s not defined on all paths' % (s, word)
-                raise CompileError(e)
+                raise CompileError(e, tree.meta)
 
             #find the name of the current class
             class_ = tree.children[0].children[0]
@@ -264,7 +264,7 @@ class FieldLoader(lark.visitors.Visitor_Recursive):
             #check that the field name exists in the initialized set
             if field not in self.initialized:
                 e = 'Field %r is not defined' % field
-                raise CompileError(e)
+                raise CompileError(e, tree.meta)
             #keep track of fields we have loaded at any point
             self.seen.add(field)
         elif tree.data == 'store_field':
@@ -318,7 +318,7 @@ class ReturnChecker(lark.visitors.Visitor_Recursive):
             ret_type = str(tree.children[2] or 'Nothing')
             if ret_type != 'Nothing':
                 e = '%r does not return on every path' % m_name
-                raise CompileError(e)
+                raise CompileError(e, tree.meta)
             nothing = Tree('lit_nothing', [])
             ret_node = Tree('ret_exp', [nothing])
             statements.append(ret_node)
