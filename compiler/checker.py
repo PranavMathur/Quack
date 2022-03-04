@@ -38,19 +38,17 @@ class FieldLoader(lark.visitors.Visitor_Recursive):
         #if the entire class has been processed, check for uninitialized
         #fields and update the types table
         if tree.data == 'class_':
+            c_name = str(tree.children[0].children[0])
             #compute the fields which were seen but not initialized
             free_fields = self.seen - self.initialized
             if free_fields:
                 #if any such fields were found, throw a compile error
                 s = ', '.join(free_fields)
                 word = 'are' if len(free_fields) > 1 else 'is'
-                e = '%r %s not defined on all paths' % (s, word)
-                raise CompileError(e, tree.meta)
+                e = '%r %s not defined on all paths in %r' % (s, word, c_name)
+                raise CompileError(e)
 
-            #find the name of the current class
-            class_ = tree.children[0].children[0]
-            fields = self.types[class_]['fields']
-
+            fields = self.types[c_name]['fields']
             #store each new field in the types table
             for field in self.initialized:
                 if field not in fields:
