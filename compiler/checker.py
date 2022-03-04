@@ -46,7 +46,7 @@ class FieldLoader(lark.visitors.Visitor_Recursive):
                 s = ', '.join(free_fields)
                 word = 'are' if len(free_fields) > 1 else 'is'
                 e = '%r %s not defined on all paths in %r' % (s, word, c_name)
-                raise CompileError(e)
+                raise CompileError(e, tree.meta)
 
             fields = self.types[c_name]['fields']
             #store each new field in the types table
