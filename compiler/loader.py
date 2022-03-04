@@ -19,8 +19,12 @@ def load_classes(tree, types):
 
         #extract superclass's name - Obj if none is given
         super_type = str(class_sig.children[2] or 'Obj')
-        #retrieve information about superclass from method table
-        super_class = types[super_type]
+        try:
+            #retrieve information about superclass from method table
+            super_class = types[super_type]
+        except KeyError:
+            e = 'Could not find %r' % super_type
+            raise CompileError(e, class_.meta)
         #make a copy of the superclass's methods for this table
         super_methods = deepcopy(super_class['methods'])
         #make a copy of the superclass's fields for this table
