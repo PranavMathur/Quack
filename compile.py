@@ -6,13 +6,13 @@ import traceback
 import json
 import sys
 
+from compiler.checker import FieldLoader, ReturnChecker, VarChecker
 from compiler.errors import CompileError
-from compiler.grammar import quack_grammar
 from compiler.generator import Generator, generate_file
-from compiler.loader import load_classes, FieldLoader, ReturnChecker
+from compiler.grammar import quack_grammar
+from compiler.loader import load_classes
 from compiler.transformer import OpTransformer, ClassTransformer
 from compiler.typechecker import TypeChecker, check_inherited
-from compiler.varchecker import VarChecker
 
 types_file = 'builtin_methods.json'
 
