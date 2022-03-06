@@ -1,9 +1,7 @@
 /*
-This examples illustrates the error of not initializing a variable/field
-on every execution path. It differs from correct.qk by the commented out
-line 14, which causes "z" to not be initialized on some constructor path.
-A similar result could be obtained by commenting line 31, which leads to
-result not being defined on all paths.
+This example illustrates the error that occurs when a method does not return
+from every execution path. It differs from correct.qk by the commented out
+line 60, which causes Derived:bar to not return from every path.
 */
 
 class Base(x: Int, y: String) {
@@ -15,7 +13,7 @@ class Base(x: Int, y: String) {
         this.z = 10;
     }
     elif x > 20 {
-        //this.z = 100;
+        this.z = 100;
     }
     else {
         this.z = 1000;
@@ -59,9 +57,11 @@ class Derived(x: Int, z: Int) extends Base {
             return 84;
         }
         else if this.x > 200 {
-            return 54;
+            //return 54;
         }
-        return 1234;
+        else {
+            return 1234;
+        }
     }
 }
 

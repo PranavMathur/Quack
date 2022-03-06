@@ -1,9 +1,8 @@
 /*
-This examples illustrates the error of not initializing a variable/field
-on every execution path. It differs from correct.qk by the commented out
-line 14, which causes "z" to not be initialized on some constructor path.
-A similar result could be obtained by commenting line 31, which leads to
-result not being defined on all paths.
+This examples shows the error when an overridden method breaks contravariance
+rules. It differs from correct.qk by changing the return type of the first
+argument of Base:bar from Int to Nothing. Changing the return type of Base:bar
+to a class that is not a superclass of Int would cause a similar error.
 */
 
 class Base(x: Int, y: String) {
@@ -15,7 +14,7 @@ class Base(x: Int, y: String) {
         this.z = 10;
     }
     elif x > 20 {
-        //this.z = 100;
+        this.z = 100;
     }
     else {
         this.z = 1000;
@@ -54,7 +53,7 @@ class Derived(x: Int, z: Int) extends Base {
     this.y = this.x1.string();
     this.y1 = this.y + "\n";
     this.z = z;
-    def bar(a: Obj, b: Obj) : Int {
+    def bar(a: Nothing, b: Obj) : Int {
         if this.x < 123 {
             return 84;
         }
@@ -72,4 +71,4 @@ b.foo(none).println(); //expected out: false
 b.bar(42, "World").println(); //expected out: 45
 
 d.foo(-70).println(); //expected out: true
-d.bar("Hiya", "Globe").println(); //expected out: 84
+d.bar(none, "Globe").println(); //expected out: 84

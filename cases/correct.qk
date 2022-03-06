@@ -1,3 +1,8 @@
+/*
+This example shows properly functioning inheritance and polymorphism, as well as
+functioning control flow structures (if/while/typecase) and field manipulation.
+*/
+
 class Base(x: Int, y: String) {
     this.x = x;
     this.x1 = 4 * x + 10;
