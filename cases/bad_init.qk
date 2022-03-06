@@ -1,0 +1,71 @@
+//This examples illustrates the error of not initializing a variable/field
+//on every execution path. It differs from correct.qk by the commented out
+//line 14, which causes "z" to not be initialized on some constructor path
+
+class Base(x: Int, y: String) {
+    this.x = x;
+    this.x1 = 4 * x + 10;
+    this.y = y;
+    this.y1 = y + "\n";
+    if x < 10 {
+        this.z = 10;
+    }
+    elif x > 20 {
+        //this.z = 100;
+    }
+    else {
+        this.z = 1000;
+    }
+    def string(): String {
+        return this.x.string() + ", " + this.y;
+    }
+    def foo(z: Obj) : Bool {
+        typecase z {
+            n: Int {
+                result = n == this.x1;
+            }
+            s: String {
+                result = s == this.y;
+            }
+            o: Obj {
+                result = false;
+            }
+        }
+        return result;
+    }
+    def bar(a: Int, b: String) : Obj {
+        if this.x < 123 {
+            return 45;
+        }
+        else if this.x > 200 {
+            return "Hello";
+        }
+        return false;
+    }
+}
+
+class Derived(x: Int, z: Int) extends Base {
+    this.x = x;
+    this.x1 = -this.x * 4 + 10;
+    this.y = this.x1.string();
+    this.y1 = this.y + "\n";
+    this.z = z;
+    def bar(a: Obj, b: Obj) : Int {
+        if this.x < 123 {
+            return 84;
+        }
+        else if this.x > 200 {
+            return 54;
+        }
+        return 1234;
+    }
+}
+
+b = Base(1, "Hello");
+d = Derived(20, 22);
+
+b.foo(none).println(); //expected out: false
+b.bar(42, "World").println(); //expected out: 45
+
+d.foo(-70).println(); //expected out: true
+d.bar("Hiya", "Globe").println(); //expected out: 84
