@@ -172,41 +172,43 @@ class FieldLoader(lark.visitors.Visitor_Recursive):
         #update the master variables set with the new variables
         self.initialized.update(new_vars)
 
-    def __default__(self, tree):
+    def load_field(self, tree):
         #only allow new fields to be defined in the constructor
         if self.current_method != '$constructor':
             return
+        obj = tree.children[0]
+        #only process stores from the "this" object
+        if (not isinstance(obj, Tree)
+                or obj.data != 'var'
+                or str(obj.children[0]) != 'this'):
+            return
 
-        if tree.data == 'load_field':
-            obj = tree.children[0]
-            #only process stores from the "this" object
-            if (not isinstance(obj, Tree)
-                    or obj.data != 'var'
-                    or str(obj.children[0]) != 'this'):
-                return
+        #get the name of the loaded field
+        field = str(tree.children[1])
+        #check that the field name exists in the initialized set
+        if field not in self.initialized:
+            e = 'Field %r is not defined' % field
+            raise CompileError(e, tree.meta)
+        #keep track of fields we have loaded at any point
+        self.seen.add(field)
 
-            #get the name of the loaded field
-            field = str(tree.children[1])
-            #check that the field name exists in the initialized set
-            if field not in self.initialized:
-                e = 'Field %r is not defined' % field
-                raise CompileError(e, tree.meta)
-            #keep track of fields we have loaded at any point
-            self.seen.add(field)
-        elif tree.data == 'store_field':
-            obj = tree.children[0]
-            #only process stores to the "this" object
-            if (not isinstance(obj, Tree)
-                    or obj.data != 'var'
-                    or str(obj.children[0]) != 'this'):
-                return
+    def store_field(self, tree):
+        #only allow new fields to be defined in the constructor
+        if self.current_method != '$constructor':
+            return
+        obj = tree.children[0]
+        #only process stores to the "this" object
+        if (not isinstance(obj, Tree)
+                or obj.data != 'var'
+                or str(obj.children[0]) != 'this'):
+            return
 
-            #get the name of the stored field
-            field = str(tree.children[1])
-            #this field has been initialized on this path
-            self.initialized.add(field)
-            #this field has been initialized on some path
-            self.seen.add(field)
+        #get the name of the stored field
+        field = str(tree.children[1])
+        #this field has been initialized on this path
+        self.initialized.add(field)
+        #this field has been initialized on some path
+        self.seen.add(field)
 
 
 #ensures each method has a return statement on every path
@@ -452,15 +454,15 @@ class VarChecker(lark.visitors.Visitor_Recursive):
         #update the master variables set with the new variables
         self.variables.update(new_vars)
 
-    def __default__(self, tree):
-        if tree.data == 'var':
-            #check that variable name exists in the variables set
-            name = str(tree.children[0])
-            if name not in self.variables:
-                #fail if variable is not found
-                e = 'Variable %r is not defined' % name
-                raise CompileError(e, tree.meta)
-        elif tree.data == 'assign':
-            #add variable name to variables set
-            name = str(tree.children[0])
-            self.variables.add(name)
+    def var(self, tree):
+        #check that variable name exists in the variables set
+        name = str(tree.children[0])
+        if name not in self.variables:
+            #fail if variable is not found
+            e = 'Variable %r is not defined' % name
+            raise CompileError(e, tree.meta)
+
+    def assign(self, tree):
+        #add variable name to variables set
+        name = str(tree.children[0])
+        self.variables.add(name)
