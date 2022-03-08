@@ -36,11 +36,15 @@ def main():
         parser='lalr',
         propagate_positions=True
     )
-    
+
     try:
         #create initial parse tree
         tree = parser.parse(args.source.read())
+    except lark.exceptions.LarkError as e:
+        print(e, file=sys.stderr)
+        exit(1)
 
+    try:
         #if one tree option was given, output state of tree after parsing
         if args.tree == 1:
             print(tree.pretty())
