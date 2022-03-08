@@ -74,6 +74,9 @@ class OpTransformer(lark.Transformer):
             return Tree('ret_exp', [ret_val])
         return tree
 
+    def LONG_STRING(self, token):
+        return '"' + token[3:-3].replace('\n', '\\n') + '"'
+
     #create a method call subtree with the appropriate binary op function
     def op_transform(self, data, children, meta):
         #desugar binary operations into method calls

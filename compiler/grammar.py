@@ -162,6 +162,7 @@ args: r_exp ("," r_exp)* (",")?
 
 //strings are predefined by lark
 ?string: ESCAPED_STRING
+       | LONG_STRING
 
 %import common.NUMBER
 %import common.ESCAPED_STRING
@@ -170,6 +171,7 @@ args: r_exp ("," r_exp)* (",")?
 %import common.CPP_COMMENT
 %import common.WS_INLINE
 %import common.WS
+%import python.LONG_STRING
 
 %ignore C_COMMENT
 %ignore CPP_COMMENT
