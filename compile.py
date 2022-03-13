@@ -9,12 +9,12 @@ import sys
 from compiler.checker import FieldLoader, ReturnChecker, VarChecker
 from compiler.errors import CompileError
 from compiler.generator import Generator, generate_file
-from compiler.grammar import quack_grammar
 from compiler.loader import load_classes, create_main
 from compiler.transformer import OpTransformer
 from compiler.typechecker import TypeChecker, check_inherited
 
 types_file = 'builtin_methods.json'
+grammar_file = 'compiler/quack.lark'
 
 #read an input and output file from the command line arguments
 def cli_parser():
@@ -31,6 +31,10 @@ def main():
     #read type table from file
     with open(types_file, 'r') as f:
         types = json.load(f)
+
+    with open(grammar_file, 'r') as f:
+        quack_grammar = f.read()
+
     parser = lark.Lark(
         quack_grammar,
         parser='lalr',

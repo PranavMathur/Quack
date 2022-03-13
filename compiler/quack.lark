@@ -1,4 +1,3 @@
-quack_grammar = """
 //the start symbol is start, which consists of a program
 ?start: program
 
@@ -177,4 +176,3 @@ args: r_exp ("," r_exp)* (",")?
 %ignore CPP_COMMENT
 %ignore WS_INLINE
 %ignore WS
-"""
