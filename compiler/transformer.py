@@ -38,10 +38,10 @@ class OpTransformer(lark.Transformer):
                 tree.children[0], #receiver of EQUALS call
                 'EQUALS',
                 Tree('args', tree.children[1:]) #argument to EQUALS call
-            ]),
+            ], tree.meta),
             'NEGATE',
             Tree('args', []) #NEGATE takes no arguments
-        ])
+        ], tree.meta)
 
     def store_field(self, tree):
         #rearrange a store_field node to look more like an assignment
@@ -64,14 +64,14 @@ class OpTransformer(lark.Transformer):
             obj,
             field,
             value
-        ])
+        ], tree.meta)
 
     def ret_exp(self, tree):
         #transform an empty return into a return none
         ret_val = tree.children[0]
         if ret_val is None:
             ret_val = Tree('lit_nothing', [])
-            return Tree('ret_exp', [ret_val])
+            return Tree('ret_exp', [ret_val], tree.meta)
         return tree
 
     def LONG_STRING(self, token):
@@ -85,12 +85,13 @@ class OpTransformer(lark.Transformer):
             children[0], #receiver object
             data.upper(), #name of operator
             Tree('args', children[1:]) #argument object, if provided
-        ])
+        ], meta)
 
     #create an assignment subtree that assigns to the result of a method call
     def assign_op(self, data, children, meta):
         method = data[:-7].upper() #extract the appropriate binary operator
         left, right = children #unpack the arguments to the operator
+
         #check if the LHS is a field access or just an lvalue
         if isinstance(children[0], Tree) and children[0].data == 'load_field':
             #handle assignment operators on fields
@@ -99,25 +100,22 @@ class OpTransformer(lark.Transformer):
 
             #create the assignment subtree
             return Tree('store_field', [
-                Tree('load_field', [
-                    obj, #object on which to set a field
-                    field #name of the field to set
-                ]),
+                obj, #object on which to set a field
+                field, #name of the field to set
                 Tree('m_call', [ #value to set the field to
                     Tree('load_field', [ #LHS of operation is the current value
                         obj, #object from which to load a value
                         field #name of the field to load
-                    ]),
+                    ], meta),
                     method, #name of binary op's associated method
                     Tree('args', [right]) #argument subtree
-                ])
+                ], meta)
             ])
 
         else:
             if isinstance(left, Tree):
                 left = left.children[0]
             #create the assignment subtree
-
             return Tree('assign', [
                 left, #LHS of assignment
                 None, #let the type checker imply the type
@@ -125,8 +123,8 @@ class OpTransformer(lark.Transformer):
                     Tree('var', [left]), #receiver object
                     method, #name of binary op's associated method
                     Tree('args', [right]) #argument subtree
-                ])
-            ])
+                ], meta)
+            ], meta)
 
     def __default__(self, data, children, meta):
         if data in ops: #only desugar certain nodes
