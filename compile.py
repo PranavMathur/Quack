@@ -10,8 +10,8 @@ from compiler.checker import FieldLoader, ReturnChecker, VarChecker
 from compiler.errors import CompileError
 from compiler.generator import Generator, generate_file
 from compiler.grammar import quack_grammar
-from compiler.loader import load_classes
-from compiler.transformer import OpTransformer, ClassTransformer
+from compiler.loader import load_classes, create_main
+from compiler.transformer import OpTransformer
 from compiler.typechecker import TypeChecker, check_inherited
 
 types_file = 'builtin_methods.json'
@@ -63,8 +63,7 @@ def main():
         field_loader.visit(tree)
 
         #creates main class for execution
-        class_transformer = ClassTransformer(args.name)
-        tree = class_transformer.transform(tree)
+        create_main(tree, args.name)
 
         #ensure each method has a return statement on every path if necessary
         return_checker = ReturnChecker()

@@ -70,3 +70,43 @@ def load_classes(tree, types):
         #remove constructor child of class, as the constructor was added
         #to the methods block
         class_body.children.pop(0)
+
+
+def create_main(tree, name):
+    #remove main class subtree from program tree
+    main_block = tree.children.pop(1)
+    #do nothing if no main class exists
+    if not main_block.children:
+        return
+
+    #create a subtree for a new main class
+    #the new class will have only one method, the constructor
+    main_class = Tree('class_', [
+        #class signature contains class name, arguments, and superclass
+        Tree('class_sig', [
+            name,
+            Tree('formal_args', []),
+            'Obj'
+        ]),
+        #class body contains methods
+        #the grammar says there should be a constructor subtree,
+        #but that is removed in the class loader
+        Tree('class_body', [
+            Tree('methods', [
+                #one method - the constructor contains executable code
+                #this constructor takes no arguments
+                #the children of the statement_block are the children
+                #of the original main_block
+                Tree('method', [
+                    '$constructor',
+                    Tree('formal_args', []),
+                    'Nothing',
+                    Tree('statement_block', main_block.children)
+                ])
+            ])
+        ])
+    ])
+
+    #add main class to children of classes block
+    classes = tree.children[0]
+    classes.children.append(main_class)
