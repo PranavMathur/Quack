@@ -193,6 +193,15 @@ class TypeChecker(lark.visitors.Visitor_Recursive):
         #the type of a condition is always Bool
         tree.type = 'Bool'
 
+    def ternary(self, tree):
+        #check that condition has type Bool
+        cond, t_exp, f_exp = tree.children
+        if cond.type != 'Bool':
+            e = 'Type of condition must be Bool'
+            raise CompileError(e, tree.meta)
+        #the type of a ternary is the LCA of the possible RHS types
+        tree.type = common_ancestor(t_exp.type, f_exp.type, self.types)
+
     def m_call(self, tree): #query the table for the return type
         left_type = tree.children[0].type #find type of receiver
         m_name = str(tree.children[1]) #get name of called function

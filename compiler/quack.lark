@@ -98,7 +98,11 @@ args: r_exp ("," r_exp)* (",")?
 //an expression can be a combination of the following
 //combination of nonterminals
 //the following nonterminals are ordered from lowest to highest precedence
-?expr: or_exp
+?expr: ternary
+
+//ternary expressions are right associative
+?ternary: or_exp
+        | or_exp "?" ternary ":" ternary
 
 //"or" binds less tightly than "and" and is left-associative
 ?or_exp: and_exp

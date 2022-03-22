@@ -7,6 +7,7 @@ preorder = (
     'method',
     'and_exp',
     'or_exp',
+    'ternary',
     'if_stmt',
     'while_lp',
     'typecase',
@@ -284,6 +285,29 @@ class Generator(lark.visitors.Visitor_Recursive):
         self.emit('const true')
 
         #or expression is over - join point
+        self.emit('%s:' % join_label, False)
+
+    def ternary(self, tree):
+        #unpack children for convenience
+        cond, t_exp, f_exp = tree.children
+        #generate labels for ternary
+        f_label = self.label('tern')
+        join_label = self.label('join')
+
+        #evaluate the condition
+        self.visit(cond)
+        #jump to the false branch if condition was false
+        self.emit('jump_ifnot %s' % f_label)
+
+        #if condition was true, evaluate the true branch
+        self.visit(t_exp)
+        #jump past the false branch
+        self.emit('jump %s' % join_label)
+
+        #if condition was false, evaluate the false branch
+        self.emit('%s:' % f_label, False)
+        self.visit(f_exp)
+
         self.emit('%s:' % join_label, False)
 
     def if_stmt(self, tree):
